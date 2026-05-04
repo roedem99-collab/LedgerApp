@@ -1,0 +1,2710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Ledger">
+<meta name="theme-color" content="#0f1117">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230f1117'/><text y='.9em' font-size='72' x='12'>💰</text></svg>">
+<title>Ledger</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #181c27;
+    --surface2: #1e2333;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.13);
+    --text: #e8eaf0;
+    --text2: #8b90a0;
+    --text3: #555b6e;
+    --green: #2dd4a0;
+    --green-dim: rgba(45,212,160,0.12);
+    --red: #f4645f;
+    --red-dim: rgba(244,100,95,0.12);
+    --amber: #f5a623;
+    --amber-dim: rgba(245,166,35,0.12);
+    --blue: #5b9cf6;
+    --blue-dim: rgba(91,156,246,0.12);
+    --accent: #2dd4a0;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── TOP BAR ── */
+  .topbar {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    padding: 0 24px;
+    height: 56px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    flex-shrink: 0;
+  }
+  .topbar-logo {
+    font-family: 'DM Serif Display', serif;
+    font-size: 20px;
+    color: var(--green);
+    margin-right: 32px;
+    letter-spacing: -0.5px;
+  }
+  .nav-tabs { display: flex; gap: 4px; flex: 1; }
+  .nav-tab {
+    padding: 6px 18px;
+    border-radius: 6px;
+    border: none;
+    background: none;
+    color: var(--text2);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .nav-tab:hover { background: var(--surface2); color: var(--text); }
+  .nav-tab.active { background: var(--green-dim); color: var(--green); }
+  .topbar-actions { display: flex; gap: 8px; align-items: center; }
+  .btn {
+    padding: 7px 16px;
+    border-radius: 7px;
+    border: 1px solid var(--border2);
+    background: var(--surface2);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn:hover { border-color: rgba(255,255,255,0.2); background: #252a3a; }
+  .btn-primary { background: var(--green); color: #0a1a14; border-color: var(--green); }
+  .btn-primary:hover { background: #26c090; border-color: #26c090; }
+  .btn-danger { background: var(--red-dim); color: var(--red); border-color: rgba(244,100,95,0.3); }
+
+  /* ── LAYOUT ── */
+  .layout { display: flex; flex: 1; overflow: hidden; }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: 280px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--border);
+    background: var(--surface);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    padding: 20px 16px;
+    gap: 20px;
+  }
+
+  /* ── MAIN CONTENT ── */
+  .main { flex: 1; overflow-y: auto; padding: 24px; }
+
+  /* ── PAGES ── */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+  }
+  .card-title {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 14px;
+  }
+
+  /* ── STAT CARDS ── */
+  .stat-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 20px; }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+  }
+  .stat-label { font-size: 11px; color: var(--text2); font-weight: 500; margin-bottom: 8px; }
+  .stat-val { font-size: 26px; font-weight: 300; letter-spacing: -0.5px; }
+  .stat-val.green { color: var(--green); }
+  .stat-val.red { color: var(--red); }
+  .stat-val.amber { color: var(--amber); }
+  .stat-sub { font-size: 12px; color: var(--text3); margin-top: 4px; }
+
+  /* ── CALENDAR ── */
+  .cal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .cal-month {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    letter-spacing: -0.3px;
+  }
+  .cal-nav { display: flex; gap: 6px; }
+  .cal-nav-btn {
+    width: 32px; height: 32px;
+    border-radius: 6px;
+    border: 1px solid var(--border2);
+    background: var(--surface2);
+    color: var(--text);
+    cursor: pointer;
+    font-size: 16px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .cal-nav-btn:hover { border-color: rgba(255,255,255,0.2); }
+  .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7,1fr);
+    gap: 1px;
+    background: var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .cal-dow {
+    background: var(--surface2);
+    padding: 8px 0;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    color: var(--text3);
+    text-transform: uppercase;
+  }
+  .cal-day {
+    background: var(--surface);
+    min-height: 90px;
+    padding: 8px;
+    position: relative;
+    transition: background 0.1s;
+  }
+  .cal-day:hover { background: var(--surface2); }
+  .cal-day.other-month { opacity: 0.35; }
+  .cal-day.today { background: rgba(45,212,160,0.05); }
+  .cal-day.today .cal-dn { color: var(--green); font-weight: 700; }
+  .cal-dn {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text2);
+    margin-bottom: 4px;
+  }
+  .cal-event {
+    font-size: 10px;
+    padding: 2px 5px;
+    border-radius: 4px;
+    margin-bottom: 2px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+  }
+  .cal-event.bill { background: var(--red-dim); color: var(--red); }
+  .cal-event.payday { background: var(--green-dim); color: var(--green); }
+  .cal-event.balance { background: var(--blue-dim); color: var(--blue); font-size: 9px; }
+
+  /* ── BILLS LIST ── */
+  .bill-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .bill-row:last-child { border-bottom: none; }
+  .bill-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .bill-name { flex: 1; font-size: 14px; }
+  .bill-due { font-size: 12px; color: var(--text3); min-width: 60px; text-align: right; }
+  .bill-amt { font-size: 14px; font-weight: 500; min-width: 70px; text-align: right; }
+  .badge {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .badge-paid { background: var(--green-dim); color: var(--green); }
+  .badge-due { background: var(--red-dim); color: var(--red); }
+  .badge-soon { background: var(--amber-dim); color: var(--amber); }
+  .badge-upcoming { background: var(--surface2); color: var(--text3); }
+
+  /* ── FORM ── */
+  .form-row { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-group label { font-size: 11px; color: var(--text2); font-weight: 500; }
+  input, select {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 7px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    padding: 8px 12px;
+    height: 36px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  input:focus, select:focus { border-color: var(--green); }
+  input::placeholder { color: var(--text3); }
+  select option { background: var(--surface2); }
+
+  /* ── TRANSACTIONS ── */
+  .txn-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .txn-row:last-child { border-bottom: none; }
+  .txn-date { font-size: 12px; color: var(--text3); min-width: 80px; }
+  .txn-desc { flex: 1; font-size: 13px; }
+  .txn-cat { font-size: 11px; color: var(--text3); min-width: 90px; text-align: right; }
+  .txn-amt { font-size: 14px; font-weight: 500; min-width: 80px; text-align: right; }
+  .txn-amt.debit { color: var(--red); }
+  .txn-amt.credit { color: var(--green); }
+
+  /* ── ALERT BANNER ── */
+  .alert-banner {
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+  }
+  .alert-icon { font-size: 22px; flex-shrink: 0; margin-top: 2px; }
+  .alert-title { font-size: 15px; font-weight: 600; margin-bottom: 3px; }
+  .alert-body { font-size: 13px; line-height: 1.6; color: var(--text2); }
+  .alert-green { background: var(--green-dim); border: 1px solid rgba(45,212,160,0.25); }
+  .alert-amber { background: var(--amber-dim); border: 1px solid rgba(245,166,35,0.25); }
+  .alert-red { background: var(--red-dim); border: 1px solid rgba(244,100,95,0.25); }
+
+  /* ── PROGRESS BAR ── */
+  .progress-wrap { background: var(--surface2); border-radius: 4px; height: 6px; overflow: hidden; margin: 8px 0; }
+  .progress-fill { height: 100%; border-radius: 4px; transition: width 0.5s ease; }
+
+  /* ── SIDEBAR WIDGETS ── */
+  .sidebar-section { display: flex; flex-direction: column; gap: 8px; }
+  .sidebar-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text3); }
+  .balance-display {
+    background: var(--surface2);
+    border-radius: 10px;
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+  }
+  .balance-amt { font-size: 28px; font-weight: 300; letter-spacing: -1px; color: var(--green); }
+  .balance-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .upcoming-bill {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    background: var(--surface2);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+  .ub-days { font-size: 11px; color: var(--text3); min-width: 40px; }
+  .ub-name { flex: 1; font-size: 13px; }
+  .ub-amt { font-size: 13px; font-weight: 500; color: var(--red); }
+
+  /* ── IMPORT AREA ── */
+  .import-drop {
+    border: 2px dashed var(--border2);
+    border-radius: var(--radius);
+    padding: 40px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .import-drop:hover, .import-drop.drag-over {
+    border-color: var(--green);
+    background: var(--green-dim);
+  }
+  .import-icon { font-size: 48px; margin-bottom: 12px; }
+  .import-title { font-size: 16px; font-weight: 500; margin-bottom: 6px; }
+  .import-sub { font-size: 13px; color: var(--text2); }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 16px;
+    padding: 28px;
+    width: 420px;
+    max-width: 90vw;
+  }
+  .modal-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 20px;
+    margin-bottom: 20px;
+  }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 24px; }
+  .form-group-full { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; }
+  .form-group-full label { font-size: 11px; color: var(--text2); font-weight: 500; }
+  .form-group-full input, .form-group-full select { width: 100%; }
+
+  /* ── CHART ── */
+  .chart-container { position: relative; width: 100%; height: 200px; }
+
+  /* misc */
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .section-title { font-family: 'DM Serif Display', serif; font-size: 22px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .mt8 { margin-top: 8px; }
+  .mt16 { margin-top: 16px; }
+  .mt20 { margin-top: 20px; }
+  .empty-state { text-align: center; padding: 40px; color: var(--text3); font-size: 13px; }
+  hr { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 10px; border-radius: 20px;
+    font-size: 11px; font-weight: 500;
+    background: var(--surface2); color: var(--text2);
+    border: 1px solid var(--border);
+    margin: 2px;
+    cursor: pointer;
+  }
+  .chip.active { background: var(--green-dim); color: var(--green); border-color: rgba(45,212,160,0.3); }
+  /* ── CREDIT CARDS ── */
+  .cc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; margin-bottom: 20px; }
+  .cc-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .cc-card:hover { border-color: var(--border2); }
+  .cc-card-accent {
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    border-radius: 16px 16px 0 0;
+  }
+  .cc-card-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 16px; }
+  .cc-card-name { font-size: 15px; font-weight: 600; }
+  .cc-card-due { font-size: 11px; color: var(--text3); margin-top: 3px; }
+  .cc-balance { font-size: 30px; font-weight: 300; letter-spacing: -1px; margin-bottom: 4px; }
+  .cc-balance-label { font-size: 11px; color: var(--text3); margin-bottom: 16px; }
+  .cc-progress-wrap { background: var(--surface2); border-radius: 6px; height: 6px; margin-bottom: 6px; overflow: hidden; }
+  .cc-progress-fill { height: 100%; border-radius: 6px; transition: width 0.6s ease; }
+  .cc-pct { font-size: 11px; color: var(--text3); margin-bottom: 16px; }
+  .cc-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .cc-row:last-child { border-bottom: none; }
+  .cc-row-label { color: var(--text2); }
+  .cc-row-val { font-weight: 500; }
+  .cc-payoff-badge {
+    display: inline-block; margin-top: 14px;
+    padding: 6px 14px; border-radius: 20px;
+    font-size: 12px; font-weight: 600;
+    background: var(--blue-dim); color: var(--blue);
+  }
+  .cc-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
+  .cc-input-group { display: flex; flex-direction: column; gap: 4px; }
+  .cc-input-group label { font-size: 10px; color: var(--text3); font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+  .cc-input-group input { height: 32px; font-size: 13px; padding: 0 10px; }
+  .cc-actions { display: flex; gap: 6px; margin-top: 12px; }
+
+  /* Comparison panel */
+  .compare-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 16px; }
+  .compare-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+  }
+  .compare-card.highlight { border-color: var(--green); background: var(--green-dim); }
+  .compare-label { font-size: 11px; color: var(--text2); font-weight: 600; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .compare-val { font-size: 26px; font-weight: 300; letter-spacing: -0.5px; margin-bottom: 4px; }
+  .compare-sub { font-size: 12px; color: var(--text3); }
+  .compare-savings { font-size: 13px; font-weight: 600; color: var(--green); margin-top: 6px; }
+
+  /* Timeline */
+  .timeline-wrap { position: relative; padding: 8px 0; }
+  .timeline-bar-bg { height: 28px; border-radius: 6px; background: var(--surface2); overflow: hidden; margin-bottom: 8px; position: relative; }
+  .timeline-fill { height: 100%; border-radius: 6px; display: flex; align-items: center; padding: 0 10px; font-size: 11px; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; transition: width 0.6s ease; }
+  .timeline-label { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 11px; color: var(--text3); }
+  .debt-free-banner {
+    background: linear-gradient(135deg, var(--green-dim), rgba(91,156,246,0.1));
+    border: 1px solid rgba(45,212,160,0.3);
+    border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 20px;
+  }
+  .debt-free-date { font-family: 'DM Serif Display', serif; font-size: 32px; color: var(--green); letter-spacing: -0.5px; }
+  .debt-free-label { font-size: 13px; color: var(--text2); margin-top: 4px; }
+  /* ── DRIVE SYNC STATUS ── */
+  .sync-bar {
+    display: flex; align-items: center; gap: 8px;
+    padding: 0 16px; font-size: 12px; color: var(--text3);
+  }
+  .sync-dot {
+    width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+    background: var(--text3);
+  }
+  .sync-dot.synced  { background: var(--green); }
+  .sync-dot.syncing { background: var(--amber); animation: pulse 1s infinite; }
+  .sync-dot.error   { background: var(--red); }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  /* ── MOBILE BOTTOM NAV ── */
+  .mobile-nav {
+    display: none;
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 8px 0 env(safe-area-inset-bottom, 8px);
+    z-index: 50;
+  }
+  .mobile-nav-inner { display: flex; justify-content: space-around; }
+  .mobile-nav-btn {
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    padding: 6px 12px; border: none; background: none;
+    color: var(--text3); font-family: 'DM Sans', sans-serif;
+    font-size: 10px; font-weight: 500; cursor: pointer;
+    border-radius: 8px; transition: all 0.15s;
+    min-width: 52px;
+  }
+  .mobile-nav-btn .nav-icon { font-size: 20px; line-height: 1; }
+  .mobile-nav-btn.active { color: var(--green); }
+  .mobile-nav-btn.active .nav-icon { transform: scale(1.15); }
+
+  /* ── RESPONSIVE BREAKPOINTS ── */
+  @media (max-width: 768px) {
+    html, body { overflow: auto; height: auto; }
+
+    /* Top bar collapses */
+    .topbar { padding: 0 16px; height: 52px; }
+    .topbar-logo { margin-right: 0; font-size: 18px; }
+    .nav-tabs { display: none; }
+    .topbar-actions { gap: 6px; }
+    .topbar-actions .btn { padding: 5px 10px; font-size: 12px; }
+
+    /* Layout stacks */
+    .layout { flex-direction: column; overflow: visible; }
+    .sidebar { display: none; } /* Hidden on mobile — info shown inline */
+    .main { padding: 12px 12px 100px; overflow: visible; }
+
+    /* Mobile bottom nav shows */
+    .mobile-nav { display: block; }
+
+    /* Stat grids go 2 cols */
+    .stat-grid { grid-template-columns: 1fr 1fr !important; gap: 10px; }
+
+    /* Two-col grids stack */
+    .grid-2 { grid-template-columns: 1fr !important; }
+
+    /* CC grid single col */
+    .cc-grid { grid-template-columns: 1fr !important; }
+
+    /* Comparison grid stacks */
+    .compare-grid { grid-template-columns: 1fr !important; }
+
+    /* Calendar cells shorter */
+    .cal-day { min-height: 60px; padding: 5px; }
+    .cal-dn { font-size: 12px; }
+    .cal-event { font-size: 9px; padding: 1px 3px; }
+
+    /* Paycheck history table scrolls */
+    #paycheck-history-list { overflow-x: auto; }
+
+    /* Forms full width */
+    .add-form,
+    .income-input { flex-direction: column; gap: 8px; }
+    .add-form input, .add-form select,
+    .income-input input, .income-input select { width: 100% !important; }
+
+    /* Paycheck summary wraps */
+    #paycheck-summary { grid-template-columns: 1fr 1fr !important; }
+
+    /* Modals full screen on mobile */
+    .modal { width: 100% !important; max-width: 100% !important;
+             border-radius: 20px 20px 0 0 !important;
+             margin: auto 0 0 0 !important; padding: 24px 20px 32px; }
+    .modal-overlay.open { align-items: flex-end; }
+
+    /* Transaction rows compact */
+    .txn-cat { display: none; }
+    .txn-date { min-width: 60px; font-size: 11px; }
+
+    /* Bill rows compact */
+    .bill-due { display: none; }
+
+    /* Topbar import/add buttons smaller */
+    .btn { font-size: 12px; padding: 6px 10px; }
+
+    /* Section title smaller */
+    .section-title { font-size: 18px; }
+
+    /* Card padding reduce */
+    .card { padding: 14px; }
+
+    /* Extra payment controls wrap */
+    .compare-extra-row { flex-direction: column !important; align-items: flex-start !important; }
+  }
+
+  @media (max-width: 480px) {
+    .stat-grid { grid-template-columns: 1fr 1fr !important; }
+    .stat-val { font-size: 20px; }
+    .topbar-logo { font-size: 16px; }
+    #paycheck-summary { grid-template-columns: 1fr !important; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-logo">💰 Ledger</div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('dashboard')">Dashboard</button>
+    <button class="nav-tab" onclick="showPage('calendar')">Calendar</button>
+    <button class="nav-tab" onclick="showPage('bills')">Bills</button>
+    <button class="nav-tab" onclick="showPage('transactions')">Transactions</button>
+    <button class="nav-tab" onclick="showPage('income')">Income</button>
+    <button class="nav-tab" onclick="showPage('creditcards')">Credit Cards</button>
+    <button class="nav-tab" onclick="showPage('settings')">Settings</button>
+  </div>
+  <div class="topbar-actions">
+    <div class="sync-bar">
+      <div class="sync-dot" id="sync-dot"></div>
+      <span id="sync-label">Not connected</span>
+    </div>
+    <button class="btn" id="drive-btn" onclick="connectDrive()" style="font-size:12px;padding:5px 12px">
+      ☁️ Connect Drive
+    </button>
+    <button class="btn" onclick="openImportModal()">&#8593; Import CSV</button>
+    <button class="btn btn-primary" onclick="openAddBillModal()">+ Add Bill</button>
+  </div>
+</div>
+
+<!-- MOBILE BOTTOM NAV -->
+<div class="mobile-nav">
+  <div class="mobile-nav-inner">
+    <button class="mobile-nav-btn active" id="mnav-dashboard" onclick="showPage('dashboard','mnav-dashboard')">
+      <span class="nav-icon">🏠</span>Home
+    </button>
+    <button class="mobile-nav-btn" id="mnav-calendar" onclick="showPage('calendar','mnav-calendar')">
+      <span class="nav-icon">📅</span>Calendar
+    </button>
+    <button class="mobile-nav-btn" id="mnav-bills" onclick="showPage('bills','mnav-bills')">
+      <span class="nav-icon">📋</span>Bills
+    </button>
+    <button class="mobile-nav-btn" id="mnav-transactions" onclick="showPage('transactions','mnav-transactions')">
+      <span class="nav-icon">💳</span>Txns
+    </button>
+    <button class="mobile-nav-btn" id="mnav-creditcards" onclick="showPage('creditcards','mnav-creditcards')">
+      <span class="nav-icon">💰</span>Cards
+    </button>
+    <button class="mobile-nav-btn" id="mnav-settings" onclick="showPage('settings','mnav-settings')">
+      <span class="nav-icon">⚙️</span>More
+    </button>
+  </div>
+</div>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-title">Account Balance</div>
+      <div class="balance-display">
+        <div class="balance-amt" id="sb-balance">$0.00</div>
+        <div class="balance-sub">Available balance</div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-title">Daily Budget</div>
+      <div class="balance-display" style="padding:12px 16px">
+        <div style="font-size:22px;font-weight:300;color:var(--amber)" id="sb-daily">$0.00</div>
+        <div class="balance-sub" id="sb-daily-sub">per day until payday</div>
+        <div class="progress-wrap mt8">
+          <div class="progress-fill" id="sb-days-prog" style="width:50%;background:var(--amber)"></div>
+        </div>
+        <div class="balance-sub" id="sb-days-label">— days remaining</div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-title">Upcoming Bills</div>
+      <div id="sidebar-upcoming">
+        <div class="empty-state" style="padding:16px">No bills added</div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-title">This Month</div>
+      <div class="balance-display" style="padding:12px 16px">
+        <div style="font-size:12px;color:var(--text2);display:flex;justify-content:space-between;margin-bottom:6px">
+          <span>Bills</span><span id="sb-bills-total" style="color:var(--red)">$0</span>
+        </div>
+        <div style="font-size:12px;color:var(--text2);display:flex;justify-content:space-between;margin-bottom:6px">
+          <span>Spending</span><span id="sb-spend-total" style="color:var(--red)">$0</span>
+        </div>
+        <div style="font-size:12px;color:var(--text2);display:flex;justify-content:space-between">
+          <span>Income</span><span id="sb-income-total" style="color:var(--green)">$0</span>
+        </div>
+        <hr>
+        <div style="font-size:13px;display:flex;justify-content:space-between;font-weight:500">
+          <span>Net</span><span id="sb-net"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- DASHBOARD -->
+    <div id="page-dashboard" class="page active">
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-label">Balance</div>
+          <div class="stat-val green" id="st-balance">$0.00</div>
+          <div class="stat-sub">Current account</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Monthly Income</div>
+          <div class="stat-val" id="st-income">$0.00</div>
+          <div class="stat-sub">Take-home pay</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Bills</div>
+          <div class="stat-val red" id="st-bills">$0.00</div>
+          <div class="stat-sub">This month</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Remaining</div>
+          <div class="stat-val" id="st-remaining">$0.00</div>
+          <div class="stat-sub">After bills</div>
+        </div>
+      </div>
+
+      <div id="alert-area" style="margin-bottom:16px"></div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">Budget Usage</div>
+          <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px">
+            <span id="budget-pct-label" style="color:var(--text2)">0% used</span>
+            <span id="budget-remain-label" style="color:var(--text3)"></span>
+          </div>
+          <div class="progress-wrap" style="height:8px">
+            <div class="progress-fill" id="budget-bar" style="width:0%;background:var(--green)"></div>
+          </div>
+          <div style="font-size:11px;color:var(--text3);margin-top:6px" id="budget-sub"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Days to Payday</div>
+          <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:6px">
+            <span style="font-size:32px;font-weight:300;letter-spacing:-1px;color:var(--amber)" id="days-count">—</span>
+            <span style="font-size:13px;color:var(--text3)" id="days-label-sub">days remaining</span>
+          </div>
+          <div class="progress-wrap" style="height:6px">
+            <div class="progress-fill" id="days-bar" style="width:0%;background:var(--amber)"></div>
+          </div>
+          <div style="font-size:11px;color:var(--text3);margin-top:6px" id="payday-label"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Recent Transactions</div>
+        <div id="recent-txns">
+          <div class="empty-state">No transactions imported yet.<br>Use the "Import CSV" button above to load your USAA export.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CALENDAR -->
+    <div id="page-calendar" class="page">
+      <div class="cal-header">
+        <div class="cal-month" id="cal-title">April 2025</div>
+        <div class="cal-nav">
+          <button class="cal-nav-btn" onclick="calPrev()">&#8592;</button>
+          <button class="btn" onclick="calToday()" style="padding:5px 14px;font-size:12px">Today</button>
+          <button class="cal-nav-btn" onclick="calNext()">&#8594;</button>
+        </div>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
+      <div style="display:flex;gap:16px;margin-top:12px;font-size:12px;color:var(--text3)">
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:var(--red-dim);border:1px solid var(--red);margin-right:4px;vertical-align:middle"></span>Bill due</span>
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:var(--green-dim);border:1px solid var(--green);margin-right:4px;vertical-align:middle"></span>Payday</span>
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:var(--blue-dim);border:1px solid var(--blue);margin-right:4px;vertical-align:middle"></span>Balance snapshot</span>
+      </div>
+    </div>
+
+    <!-- BILLS -->
+    <div id="page-bills" class="page">
+      <div class="section-header">
+        <div class="section-title">Bills</div>
+        <button class="btn btn-primary" onclick="openAddBillModal()">+ Add Bill</button>
+      </div>
+      <div class="card">
+        <div id="bills-list">
+          <div class="empty-state">No bills added yet. Click "+ Add Bill" to get started.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TRANSACTIONS -->
+    <div id="page-transactions" class="page">
+      <div class="section-header">
+        <div class="section-title">Transactions</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input type="text" id="txn-search" placeholder="Search..." style="width:180px" oninput="renderTransactions()">
+          <button class="btn" onclick="openImportModal()">&#8593; Import CSV</button>
+        </div>
+      </div>
+      <div style="margin-bottom:12px;display:flex;flex-wrap:wrap;gap:4px" id="cat-chips"></div>
+      <div class="card">
+        <div id="txn-list">
+          <div class="empty-state">No transactions yet. Import a CSV from USAA to get started.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INCOME -->
+    <div id="page-income" class="page">
+      <div class="section-header">
+        <div class="section-title">Income & Paycheck</div>
+      </div>
+
+      <!-- Pay schedule -->
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title">Pay Schedule</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px">
+          <div class="form-group-full" style="margin-bottom:0">
+            <label>Pay frequency</label>
+            <select id="inc-freq" onchange="calcIncome()">
+              <option value="weekly">Weekly (52x/yr)</option>
+              <option value="biweekly" selected>Bi-weekly (26x/yr)</option>
+              <option value="semimonthly">Semi-monthly (24x/yr)</option>
+              <option value="monthly">Monthly (12x/yr)</option>
+            </select>
+          </div>
+          <div class="form-group-full" style="margin-bottom:0">
+            <label>Next payday</label>
+            <input type="date" id="inc-nextpay" oninput="calcIncome()">
+          </div>
+          <div class="form-group-full" style="margin-bottom:0">
+            <label>Gross pay per paycheck ($)</label>
+            <input type="number" id="inc-gross" placeholder="e.g. 3000" min="0" step="0.01" oninput="calcIncome()">
+          </div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+
+        <!-- Pre-tax deductions -->
+        <div class="card">
+          <div class="card-title">Pre-Tax Deductions <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text3)">(reduce taxable income)</span></div>
+          <div id="pretax-list"></div>
+          <div style="display:flex;gap:8px;margin-top:12px;align-items:flex-end">
+            <div class="form-group-full" style="flex:1;margin-bottom:0">
+              <label>Name</label>
+              <input type="text" id="pt-name" placeholder="e.g. 401(k), HSA, Medical">
+            </div>
+            <div class="form-group-full" style="width:110px;margin-bottom:0">
+              <label>Amount ($)</label>
+              <input type="number" id="pt-amt" placeholder="0.00" min="0" step="0.01">
+            </div>
+            <div class="form-group-full" style="width:90px;margin-bottom:0">
+              <label>Type</label>
+              <select id="pt-type">
+                <option value="flat">Flat $</option>
+                <option value="pct">% of gross</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" style="height:36px;white-space:nowrap" onclick="addDeduction('pretax')">Add</button>
+          </div>
+        </div>
+
+        <!-- Taxes -->
+        <div class="card">
+          <div class="card-title">Taxes</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div class="form-group-full" style="margin-bottom:0">
+              <label>Federal income tax (%)</label>
+              <input type="number" id="tax-federal" placeholder="e.g. 22" min="0" max="50" step="0.1" oninput="calcIncome()" value="22">
+            </div>
+            <div class="form-group-full" style="margin-bottom:0">
+              <label>State income tax (%)</label>
+              <input type="number" id="tax-state" placeholder="e.g. 5" min="0" max="20" step="0.1" oninput="calcIncome()" value="5">
+            </div>
+            <div class="form-group-full" style="margin-bottom:0">
+              <label>Social Security (%)</label>
+              <input type="number" id="tax-ss" placeholder="6.2" min="0" max="10" step="0.01" oninput="calcIncome()" value="6.2">
+            </div>
+            <div class="form-group-full" style="margin-bottom:0">
+              <label>Medicare (%)</label>
+              <input type="number" id="tax-medicare" placeholder="1.45" min="0" max="5" step="0.01" oninput="calcIncome()" value="1.45">
+            </div>
+          </div>
+          <div style="margin-top:10px;padding:10px;background:var(--surface2);border-radius:8px;font-size:12px;color:var(--text3)">
+            Taxes apply to gross minus pre-tax deductions.
+          </div>
+        </div>
+      </div>
+
+      <!-- Post-tax deductions -->
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title">Post-Tax Deductions <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text3)">(taken after taxes)</span></div>
+        <div id="posttax-list"></div>
+        <div style="display:flex;gap:8px;margin-top:12px;align-items:flex-end">
+          <div class="form-group-full" style="flex:1;margin-bottom:0">
+            <label>Name</label>
+            <input type="text" id="pst-name" placeholder="e.g. Roth IRA, Life Insurance, Garnishment">
+          </div>
+          <div class="form-group-full" style="width:110px;margin-bottom:0">
+            <label>Amount ($)</label>
+            <input type="number" id="pst-amt" placeholder="0.00" min="0" step="0.01">
+          </div>
+          <div class="form-group-full" style="width:90px;margin-bottom:0">
+            <label>Type</label>
+            <select id="pst-type">
+              <option value="flat">Flat $</option>
+              <option value="pct">% of gross</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" style="height:36px;white-space:nowrap" onclick="addDeduction('posttax')">Add</button>
+        </div>
+      </div>
+
+      <!-- Paycheck History -->
+      <div class="card" style="margin-bottom:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div class="card-title" style="margin-bottom:0">Paycheck History</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span style="font-size:12px;color:var(--text3)" id="ph-avg-label"></span>
+            <button class="btn btn-primary" style="padding:5px 14px;font-size:12px" onclick="openPaycheckModal()">+ Log Paycheck</button>
+          </div>
+        </div>
+        <div id="paycheck-history-list">
+          <div class="empty-state">No paychecks logged yet. Import a CSV or click "+ Log Paycheck" to add one manually.</div>
+        </div>
+      </div>
+
+      <!-- Paycheck summary -->
+      <div class="card" style="background:var(--surface2)">
+        <div class="card-title">Paycheck Summary</div>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--border);border-radius:10px;overflow:hidden" id="paycheck-summary">
+          <div style="background:var(--surface);padding:16px 14px">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:6px">Gross pay</div>
+            <div style="font-size:20px;font-weight:300" id="ps-gross">$0.00</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:4px" id="ps-gross-annual"></div>
+          </div>
+          <div style="background:var(--surface);padding:16px 14px">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:6px">Pre-tax deductions</div>
+            <div style="font-size:20px;font-weight:300;color:var(--amber)" id="ps-pretax">-$0.00</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:4px" id="ps-pretax-annual"></div>
+          </div>
+          <div style="background:var(--surface);padding:16px 14px">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:6px">Taxes withheld</div>
+            <div style="font-size:20px;font-weight:300;color:var(--red)" id="ps-taxes">-$0.00</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:4px" id="ps-taxes-annual"></div>
+          </div>
+          <div style="background:var(--surface);padding:16px 14px">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:6px">Post-tax deductions</div>
+            <div style="font-size:20px;font-weight:300;color:var(--amber)" id="ps-posttax">-$0.00</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:4px" id="ps-posttax-annual"></div>
+          </div>
+          <div style="background:var(--green-dim);padding:16px 14px;border-left:2px solid var(--green)">
+            <div style="font-size:11px;color:var(--green);margin-bottom:6px">Net take-home</div>
+            <div style="font-size:20px;font-weight:500;color:var(--green)" id="ps-net">$0.00</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:4px" id="ps-net-annual"></div>
+          </div>
+        </div>
+        <div style="margin-top:14px;display:flex;gap:20px;font-size:12px;color:var(--text3)">
+          <span>Effective tax rate: <strong style="color:var(--text2)" id="ps-eff-rate">0%</strong></span>
+          <span>Annual gross: <strong style="color:var(--text2)" id="ps-ann-gross">$0</strong></span>
+          <span>Annual net: <strong style="color:var(--green)" id="ps-ann-net">$0</strong></span>
+          <span>Monthly net: <strong style="color:var(--green)" id="ps-monthly-net">$0</strong></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- CREDIT CARDS -->
+    <div id="page-creditcards" class="page">
+      <div class="section-header">
+        <div class="section-title">Credit Cards</div>
+        <button class="btn btn-primary" onclick="openAddCardModal()">+ Add Card</button>
+      </div>
+
+      <!-- Debt-free banner -->
+      <div class="debt-free-banner" id="cc-debtfree-banner">
+        <div class="debt-free-label">All cards paid off by</div>
+        <div class="debt-free-date" id="cc-debtfree-date">—</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:6px" id="cc-debtfree-sub">Add cards below to see your debt-free date</div>
+      </div>
+
+      <!-- Summary stat row -->
+      <div class="stat-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px" id="cc-summary-stats">
+        <div class="stat-card"><div class="stat-label">Total Debt</div><div class="stat-val red" id="cc-total-balance">$0</div><div class="stat-sub">Across all cards</div></div>
+        <div class="stat-card"><div class="stat-label">Monthly Payments</div><div class="stat-val" id="cc-total-payment">$0</div><div class="stat-sub">Total you're paying</div></div>
+        <div class="stat-card"><div class="stat-label">Monthly Interest</div><div class="stat-val amber" id="cc-total-interest">$0</div><div class="stat-sub">Going to interest</div></div>
+        <div class="stat-card"><div class="stat-label">Total Interest Cost</div><div class="stat-val red" id="cc-total-cost">$0</div><div class="stat-sub">If you stay the course</div></div>
+      </div>
+
+      <!-- Card panels -->
+      <div class="cc-grid" id="cc-cards-grid">
+        <div class="empty-state card" style="grid-column:1/-1">No credit cards added yet. Click "+ Add Card" to get started.</div>
+      </div>
+
+      <!-- Comparison Section -->
+      <div class="card" style="margin-bottom:16px" id="cc-compare-section">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:6px">
+          <div class="card-title" style="margin-bottom:0">Payoff Strategy Comparison</div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <label style="font-size:12px;color:var(--text2);white-space:nowrap">Extra monthly payment:</label>
+            <div style="display:flex;align-items:center;gap:6px">
+              <span style="font-size:13px;color:var(--text3)">$</span>
+              <input type="number" id="cc-extra-payment" value="200" min="0" step="25" style="width:90px;height:32px;font-size:13px"
+                oninput="renderCreditCards()">
+            </div>
+            <div style="display:flex;gap:4px">
+              <button class="btn" style="padding:4px 10px;font-size:11px" onclick="adjustExtra(-50)">−$50</button>
+              <button class="btn" style="padding:4px 10px;font-size:11px" onclick="adjustExtra(50)">+$50</button>
+              <button class="btn" style="padding:4px 10px;font-size:11px" onclick="adjustExtra(100)">+$100</button>
+            </div>
+          </div>
+        </div>
+        <div style="font-size:12px;color:var(--text3);margin-bottom:16px">Extra amount is applied to the highest-APR card first (avalanche method).</div>
+
+        <div class="compare-grid" id="cc-compare-grid">
+          <!-- Minimum Only -->
+          <div class="compare-card">
+            <div class="compare-label">Minimum Only</div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:8px">Paying just the minimums</div>
+            <div class="compare-sub">Debt-free date</div>
+            <div class="compare-val red" id="cmp-min-date">—</div>
+            <div class="compare-sub" id="cmp-min-months" style="margin-bottom:12px"></div>
+            <div class="compare-sub">Total interest paid</div>
+            <div class="compare-val" style="font-size:20px;color:var(--red)" id="cmp-min-interest">—</div>
+            <div class="compare-sub" style="margin-top:10px;margin-bottom:6px;font-size:10px;text-transform:uppercase;letter-spacing:.05em">Per card payoff</div>
+            <div id="cmp-min-timeline" style="text-align:left"></div>
+          </div>
+
+          <!-- Current Plan -->
+          <div class="compare-card highlight">
+            <div class="compare-label">Your Current Plan</div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:8px">Paying your set amounts</div>
+            <div class="compare-sub">Debt-free date</div>
+            <div class="compare-val green" id="cmp-cur-date">—</div>
+            <div class="compare-sub" id="cmp-cur-months" style="margin-bottom:12px"></div>
+            <div class="compare-sub">Total interest paid</div>
+            <div class="compare-val" style="font-size:20px;color:var(--amber)" id="cmp-cur-interest">—</div>
+            <div class="compare-savings" id="cmp-cur-savings"></div>
+            <div class="compare-sub" style="margin-top:10px;margin-bottom:6px;font-size:10px;text-transform:uppercase;letter-spacing:.05em">Per card payoff</div>
+            <div id="cmp-cur-timeline" style="text-align:left"></div>
+          </div>
+
+          <!-- Accelerated -->
+          <div class="compare-card">
+            <div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:4px">
+              <div class="compare-label" style="margin-bottom:0">+$<span id="cmp-acc-label-amt">200</span>/mo Accelerated</div>
+            </div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:8px">Avalanche: extra goes to highest APR</div>
+            <div class="compare-sub">Debt-free date</div>
+            <div class="compare-val" style="color:var(--blue)" id="cmp-acc-date">—</div>
+            <div class="compare-sub" id="cmp-acc-months" style="margin-bottom:12px"></div>
+            <div class="compare-sub">Total interest paid</div>
+            <div class="compare-val" style="font-size:20px;color:var(--blue)" id="cmp-acc-interest">—</div>
+            <div class="compare-savings" id="cmp-acc-savings"></div>
+            <div class="compare-sub" style="margin-top:10px;margin-bottom:6px;font-size:10px;text-transform:uppercase;letter-spacing:.05em">Per card payoff</div>
+            <div id="cmp-acc-timeline" style="text-align:left"></div>
+          </div>
+        </div>
+
+        <!-- Combined Timeline -->
+        <div style="margin-top:24px">
+          <div class="card-title">Combined Payoff Timeline</div>
+          <div style="font-size:12px;color:var(--text3);margin-bottom:12px">Each bar shows when that card is paid off under your current plan. Width is proportional to payoff time.</div>
+          <div id="cc-timeline"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div id="page-settings" class="page">
+      <div class="section-title" style="margin-bottom:20px">Settings</div>
+
+      <!-- Google Drive Sync -->
+      <div class="card mt16" style="margin-bottom:16px;border-color:rgba(91,156,246,0.3)">
+        <div class="card-title" style="color:var(--blue)">☁️ Google Drive Sync</div>
+        <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+          <div style="flex:1;min-width:200px">
+            <div style="font-size:13px;color:var(--text2);line-height:1.7">
+              Connect Google Drive to sync your data across your desktop and iPhone. Your data is saved as <code style="background:var(--surface2);padding:1px 5px;border-radius:4px;font-size:12px">Ledger/LedgerData.json</code> in your Drive — private to you, accessible everywhere.
+            </div>
+            <div style="margin-top:8px;font-size:12px;color:var(--text3)" id="drive-status-detail">Not connected. Click Connect to sign in with Google.</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-start">
+            <button class="btn" id="drive-connect-btn" onclick="connectDrive()" style="background:var(--blue-dim);color:var(--blue);border-color:rgba(91,156,246,0.3);white-space:nowrap">
+              ☁️ Connect Google Drive
+            </button>
+            <button class="btn" id="drive-sync-now-btn" onclick="driveSaveNow()" style="display:none;font-size:12px">
+              ↑ Save to Drive now
+            </button>
+          </div>
+        </div>
+        <div style="margin-top:12px;padding:10px;background:var(--surface2);border-radius:8px;font-size:12px;color:var(--text3)">
+          📱 <strong style="color:var(--text2)">iPhone setup:</strong> Open your GitHub Pages URL in Safari on your iPhone → tap the Share button → tap "Add to Home Screen" → tap Add. The app installs with its own icon. Sign into the same Google account and tap Connect Drive — both devices sync automatically.
+        </div>
+        <div id="pwa-install-row" style="display:none;margin-top:10px;align-items:center;gap:10px">
+          <button class="btn btn-primary" onclick="installPWA()" style="font-size:13px">
+            📲 Install as App on this device
+          </button>
+          <span style="font-size:12px;color:var(--text3)">Adds Ledger to your home screen / desktop</span>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">Income & Balance</div>
+          <div class="form-group-full">
+            <label>Monthly take-home pay ($)</label>
+            <input type="number" id="set-income" placeholder="e.g. 4500" min="0" step="1" oninput="saveSettings()">
+          </div>
+          <div class="form-group-full">
+            <label>Current account balance ($)</label>
+            <input type="number" id="set-balance" placeholder="e.g. 1200" min="0" step="0.01" oninput="saveSettings()">
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Pay Schedule</div>
+          <div class="form-group-full">
+            <label>Pay frequency</label>
+            <select id="set-freq" onchange="saveSettings()">
+              <option value="monthly">Monthly</option>
+              <option value="biweekly">Bi-weekly (every 2 weeks)</option>
+              <option value="weekly">Weekly</option>
+              <option value="semimonthly">Semi-monthly (1st & 15th)</option>
+            </select>
+          </div>
+          <div class="form-group-full">
+            <label>Next payday</label>
+            <input type="date" id="set-nextpay" oninput="saveSettings()">
+          </div>
+        </div>
+      </div>
+      <div class="card mt16">
+        <div class="card-title">How to Export from USAA</div>
+        <ol style="font-size:13px;color:var(--text2);line-height:2;padding-left:20px">
+          <li>Log in to <strong style="color:var(--text)">usaa.com</strong></li>
+          <li>Go to <strong style="color:var(--text)">My Accounts → Checking / Savings</strong></li>
+          <li>Click <strong style="color:var(--text)">Download Activity</strong> (or "Export")</li>
+          <li>Choose <strong style="color:var(--text)">CSV format</strong> and your date range</li>
+          <li>Save the file, then drag it into the <strong style="color:var(--text)">Import CSV</strong> button above</li>
+        </ol>
+        <div style="font-size:12px;color:var(--text3);margin-top:12px;padding:10px;background:var(--surface2);border-radius:8px">
+          &#128274; Your data never leaves this file. Everything is stored locally in your browser on this computer only.
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ADD / EDIT CARD MODAL -->
+<div class="modal-overlay" id="modal-card">
+  <div class="modal" style="width:480px">
+    <div class="modal-title" id="modal-card-title">Add Credit Card</div>
+    <input type="hidden" id="edit-card-idx" value="-1">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="form-group-full" style="grid-column:1/-1;margin-bottom:0">
+        <label>Card name / lender</label>
+        <input type="text" id="cc-name" placeholder="e.g. American Express, USAA Visa">
+      </div>
+      <div class="form-group-full" style="margin-bottom:0">
+        <label>Current balance ($)</label>
+        <input type="number" id="cc-balance" placeholder="e.g. 4500.00" min="0" step="0.01">
+      </div>
+      <div class="form-group-full" style="margin-bottom:0">
+        <label>Credit limit ($) <span style="color:var(--text3);font-weight:400">optional</span></label>
+        <input type="number" id="cc-limit" placeholder="e.g. 10000" min="0" step="1">
+      </div>
+      <div class="form-group-full" style="margin-bottom:0">
+        <label>APR (%)</label>
+        <input type="number" id="cc-apr" placeholder="e.g. 22.99" min="0" max="100" step="0.01">
+      </div>
+      <div class="form-group-full" style="margin-bottom:0">
+        <label>Minimum payment ($)</label>
+        <input type="number" id="cc-minpay" placeholder="e.g. 35.00" min="0" step="0.01">
+      </div>
+      <div class="form-group-full" style="margin-bottom:0">
+        <label>Monthly payment ($)</label>
+        <input type="number" id="cc-payment" placeholder="e.g. 200.00" min="0" step="0.01">
+      </div>
+      <div class="form-group-full" style="margin-bottom:0">
+        <label>Due date (day of month)</label>
+        <input type="number" id="cc-due" placeholder="e.g. 15" min="1" max="31">
+      </div>
+      <div class="form-group-full" style="margin-bottom:0">
+        <label>Card color</label>
+        <select id="cc-color">
+          <option value="var(--blue)">Blue</option>
+          <option value="var(--green)">Green</option>
+          <option value="var(--red)">Red</option>
+          <option value="var(--amber)">Amber</option>
+          <option value="#a78bfa">Purple</option>
+          <option value="#f472b6">Pink</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('modal-card')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveCard()">Save Card</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOG PAYCHECK MODAL -->
+<div class="modal-overlay" id="modal-paycheck">
+  <div class="modal" style="width:460px">
+    <div class="modal-title" id="modal-paycheck-title">Log Paycheck</div>
+    <input type="hidden" id="edit-paycheck-idx" value="-1">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="form-group-full" style="margin-bottom:0">
+        <label>Date received</label>
+        <input type="date" id="ph-date">
+      </div>
+      <div class="form-group-full" style="margin-bottom:0">
+        <label>Net amount deposited ($)</label>
+        <input type="number" id="ph-net" placeholder="e.g. 2340.50" min="0" step="0.01">
+      </div>
+      <div class="form-group-full" style="margin-bottom:0">
+        <label>Gross pay ($) <span style="color:var(--text3);font-weight:400">optional</span></label>
+        <input type="number" id="ph-gross" placeholder="e.g. 3000.00" min="0" step="0.01">
+      </div>
+      <div class="form-group-full" style="margin-bottom:0">
+        <label>Taxes withheld ($) <span style="color:var(--text3);font-weight:400">optional</span></label>
+        <input type="number" id="ph-taxes" placeholder="e.g. 450.00" min="0" step="0.01">
+      </div>
+      <div class="form-group-full" style="margin-bottom:0">
+        <label>Pre-tax deductions ($) <span style="color:var(--text3);font-weight:400">optional</span></label>
+        <input type="number" id="ph-pretax" placeholder="e.g. 200.00" min="0" step="0.01">
+      </div>
+      <div class="form-group-full" style="margin-bottom:0">
+        <label>Post-tax deductions ($) <span style="color:var(--text3);font-weight:400">optional</span></label>
+        <input type="number" id="ph-posttax" placeholder="e.g. 50.00" min="0" step="0.01">
+      </div>
+    </div>
+    <div class="form-group-full" style="margin-top:12px;margin-bottom:0">
+      <label>Notes <span style="color:var(--text3);font-weight:400">optional — e.g. "Bonus included" or "Short week"</span></label>
+      <input type="text" id="ph-notes" placeholder="Any notes about this paycheck">
+    </div>
+    <div style="margin-top:12px;padding:10px;background:var(--surface2);border-radius:8px;font-size:12px;color:var(--text3)">
+      💡 After saving, the app will update your average income automatically based on your recent paychecks.
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('modal-paycheck')">Cancel</button>
+      <button class="btn btn-primary" onclick="savePaycheck()">Save Paycheck</button>
+    </div>
+  </div>
+</div>
+
+
+<div class="modal-overlay" id="modal-bill">
+  <div class="modal">
+    <div class="modal-title">Add Bill</div>
+    <div class="form-group-full">
+      <label>Bill name</label>
+      <input type="text" id="m-bill-name" placeholder="e.g. Rent, Netflix, Car Insurance">
+    </div>
+    <div class="form-group-full">
+      <label>Amount ($)</label>
+      <input type="number" id="m-bill-amt" placeholder="0.00" min="0" step="0.01">
+    </div>
+    <div class="form-group-full">
+      <label>Due day of month (1–31)</label>
+      <input type="number" id="m-bill-due" placeholder="e.g. 15" min="1" max="31">
+    </div>
+    <div class="form-group-full">
+      <label>Category</label>
+      <select id="m-bill-cat">
+        <option>Housing</option><option>Insurance</option><option>Utilities</option>
+        <option>Subscriptions</option><option>Auto</option><option>Loan</option><option>Other</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('modal-bill')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveBill()">Add Bill</button>
+    </div>
+  </div>
+</div>
+
+<!-- IMPORT MODAL -->
+<div class="modal-overlay" id="modal-import">
+  <div class="modal" style="width:500px">
+    <div class="modal-title">Import Transactions</div>
+    <div class="import-drop" id="drop-zone" onclick="document.getElementById('csv-file').click()"
+         ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropFile(event)">
+      <div class="import-icon">📂</div>
+      <div class="import-title">Drop your CSV file here</div>
+      <div class="import-sub">or click to browse · Supports USAA CSV export format</div>
+    </div>
+    <input type="file" id="csv-file" accept=".csv,.ofx" style="display:none" onchange="fileSelected(event)">
+    <div id="import-status" style="margin-top:12px;font-size:13px;color:var(--text2)"></div>
+    <div style="margin-top:16px;font-size:12px;color:var(--text3)">
+      <strong style="color:var(--text2)">USAA CSV columns expected:</strong><br>
+      Date, Description, Original Description, Category, Amount, Status<br>
+      <em>The importer also handles: Date, Transaction, Debit, Credit, Balance</em>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('modal-import')">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── STATE ──
+let state = {
+  income: 0,
+  balance: 0,
+  nextPay: '',
+  payFreq: 'biweekly',
+  bills: [],
+  transactions: [],
+  paychecks: [],
+  creditCards: [],
+  incomeData: {
+    gross: 0,
+    freq: 'biweekly',
+    nextPay: '',
+    taxFederal: 22,
+    taxState: 5,
+    taxSS: 6.2,
+    taxMedicare: 1.45,
+    pretax: [],
+    posttax: []
+  }
+};
+let calYear, calMonth;
+
+// ── INIT ──
+function init() {
+  const now = new Date();
+  calYear = now.getFullYear();
+  calMonth = now.getMonth();
+  const raw = localStorage.getItem('ledgerState');
+  if (raw) {
+    try {
+      const loaded = JSON.parse(raw);
+      Object.assign(state, loaded);
+      if (!state.incomeData) state.incomeData = { gross:0, freq:'biweekly', nextPay:'', taxFederal:22, taxState:5, taxSS:6.2, taxMedicare:1.45, pretax:[], posttax:[] };
+      if (!state.paychecks) state.paychecks = [];
+      if (!state.creditCards) state.creditCards = [];
+    } catch(e) {}
+  }
+  // Settings fields
+  document.getElementById('set-income').value = state.income || '';
+  document.getElementById('set-balance').value = state.balance || '';
+  document.getElementById('set-nextpay').value = state.nextPay || '';
+  document.getElementById('set-freq').value = state.payFreq || 'biweekly';
+  // Income tab fields
+  const id = state.incomeData;
+  document.getElementById('inc-gross').value = id.gross || '';
+  document.getElementById('inc-freq').value = id.freq || 'biweekly';
+  document.getElementById('inc-nextpay').value = id.nextPay || '';
+  document.getElementById('tax-federal').value = id.taxFederal ?? 22;
+  document.getElementById('tax-state').value = id.taxState ?? 5;
+  document.getElementById('tax-ss').value = id.taxSS ?? 6.2;
+  document.getElementById('tax-medicare').value = id.taxMedicare ?? 1.45;
+  renderDeductionList('pretax');
+  renderDeductionList('posttax');
+  renderPaycheckHistory();
+  calcIncome();
+  recalc();
+}
+
+// ── GOOGLE DRIVE SYNC ──
+const DRIVE_FILE_NAME = 'LedgerData.json';
+const DRIVE_FOLDER    = 'Ledger';
+let driveFileId   = null;
+let driveReady    = false;
+let driveSaveTimer = null;
+const GAPI_CLIENT_ID = ''; // Set via prompt — stored in localStorage
+
+function setSyncStatus(status, label) {
+  const dot = document.getElementById('sync-dot');
+  const lbl = document.getElementById('sync-label');
+  const detail = document.getElementById('drive-status-detail');
+  if (!dot) return;
+  dot.className = 'sync-dot ' + status;
+  if (lbl) lbl.textContent = label;
+  if (detail) {
+    if (status === 'synced')  detail.textContent = 'Connected & synced — ' + new Date().toLocaleTimeString();
+    if (status === 'syncing') detail.textContent = 'Saving to Google Drive…';
+    if (status === 'error')   detail.textContent = 'Sync error — data saved locally as backup.';
+    if (status === '')        detail.textContent = 'Not connected. Click Connect to sign in with Google.';
+  }
+}
+
+async function connectDrive() {
+  // We use Google Drive REST API via gapi
+  // If gapi not loaded yet, load it
+  if (typeof gapi === 'undefined') {
+    setSyncStatus('syncing', 'Loading…');
+    await loadScript('https://apis.google.com/js/api.js');
+  }
+  gapi.load('client:auth2', async () => {
+    try {
+      await gapi.client.init({
+        apiKey: 'AIzaSyD-placeholder',           // not needed for Drive with OAuth
+        clientId: state._clientId || GAPI_CLIENT_ID || promptForClientId(),
+        scope: 'https://www.googleapis.com/auth/drive.file',
+        discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest']
+      });
+      const authInstance = gapi.auth2.getAuthInstance();
+      if (!authInstance.isSignedIn.get()) {
+        await authInstance.signIn();
+      }
+      driveReady = true;
+      updateDriveUI(true);
+      setSyncStatus('syncing', 'Connected');
+      await driveLoad();
+    } catch(e) {
+      console.error('Drive auth error', e);
+      setSyncStatus('error', 'Auth failed');
+    }
+  });
+}
+
+function promptForClientId() {
+  const id = prompt(
+    'Paste your Google OAuth Client ID here.\n\n' +
+    'Your GitHub Pages URL is: ' + location.origin + '\n\n' +
+    'Make sure this URL is added to Authorized JavaScript Origins\n' +
+    'in your Google Cloud Console OAuth 2.0 Client ID settings.\n\n' +
+    'Client ID:'
+  );
+  if (id) { state._clientId = id.trim(); save(); }
+  return id || '';
+}
+
+function loadScript(src) {
+  return new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = src; s.onload = res; s.onerror = rej;
+    document.head.appendChild(s);
+  });
+}
+
+function updateDriveUI(connected) {
+  const btn = document.getElementById('drive-connect-btn');
+  const syncBtn = document.getElementById('drive-sync-now-btn');
+  const topBtn  = document.getElementById('drive-btn');
+  if (btn) {
+    btn.textContent = connected ? '✓ Drive Connected' : '☁️ Connect Google Drive';
+    btn.style.background = connected ? 'var(--green-dim)' : 'var(--blue-dim)';
+    btn.style.color      = connected ? 'var(--green)'    : 'var(--blue)';
+  }
+  if (syncBtn) syncBtn.style.display = connected ? 'block' : 'none';
+  if (topBtn)  { topBtn.textContent = connected ? '✓ Drive' : '☁️ Connect Drive'; }
+}
+
+async function driveLoad() {
+  if (!driveReady) return;
+  try {
+    setSyncStatus('syncing', 'Syncing…');
+    // Find existing file
+    const res = await gapi.client.drive.files.list({
+      q: `name='${DRIVE_FILE_NAME}' and trashed=false`,
+      spaces: 'drive', fields: 'files(id,name,modifiedTime)'
+    });
+    const files = res.result.files;
+    if (files && files.length > 0) {
+      driveFileId = files[0].id;
+      // Load content
+      const content = await gapi.client.drive.files.get({
+        fileId: driveFileId, alt: 'media'
+      });
+      const loaded = typeof content.result === 'string'
+        ? JSON.parse(content.result)
+        : content.result;
+      if (loaded && loaded.bills !== undefined) {
+        Object.assign(state, loaded);
+        if (!state.creditCards) state.creditCards = [];
+        if (!state.paychecks)   state.paychecks   = [];
+        if (!state.incomeData)  state.incomeData   = { gross:0,freq:'biweekly',nextPay:'',taxFederal:22,taxState:5,taxSS:6.2,taxMedicare:1.45,pretax:[],posttax:[] };
+        // Repopulate form fields
+        document.getElementById('set-income').value  = state.income  || '';
+        document.getElementById('set-balance').value = state.balance || '';
+        document.getElementById('set-nextpay').value = state.nextPay || '';
+        document.getElementById('set-freq').value    = state.payFreq || 'biweekly';
+        document.getElementById('inc-gross').value   = state.incomeData.gross || '';
+        document.getElementById('inc-freq').value    = state.incomeData.freq  || 'biweekly';
+        document.getElementById('inc-nextpay').value = state.incomeData.nextPay || '';
+        document.getElementById('tax-federal').value = state.incomeData.taxFederal ?? 22;
+        document.getElementById('tax-state').value   = state.incomeData.taxState   ?? 5;
+        document.getElementById('tax-ss').value      = state.incomeData.taxSS      ?? 6.2;
+        document.getElementById('tax-medicare').value= state.incomeData.taxMedicare?? 1.45;
+        recalc();
+      }
+      setSyncStatus('synced', 'Synced');
+    } else {
+      // No file yet — create it
+      await driveSaveNow();
+    }
+  } catch(e) {
+    console.error('Drive load error', e);
+    setSyncStatus('error', 'Sync error');
+  }
+}
+
+async function driveSaveNow() {
+  if (!driveReady) return;
+  setSyncStatus('syncing', 'Saving…');
+  try {
+    const body = JSON.stringify(state);
+    const blob  = new Blob([body], { type: 'application/json' });
+    if (driveFileId) {
+      // Update existing
+      await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': 'Bearer ' + gapi.auth2.getAuthInstance().currentUser.get().getAuthResponse().access_token,
+          'Content-Type': 'application/json'
+        },
+        body
+      });
+    } else {
+      // Create new
+      const meta = JSON.stringify({ name: DRIVE_FILE_NAME, mimeType: 'application/json' });
+      const form  = new FormData();
+      form.append('metadata', new Blob([meta], { type: 'application/json' }));
+      form.append('file', blob);
+      const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + gapi.auth2.getAuthInstance().currentUser.get().getAuthResponse().access_token },
+        body: form
+      });
+      const json = await res.json();
+      driveFileId = json.id;
+    }
+    setSyncStatus('synced', 'Synced');
+    // Also save locally as backup
+    try { localStorage.setItem('ledgerState', JSON.stringify(state)); } catch(e) {}
+  } catch(e) {
+    console.error('Drive save error', e);
+    setSyncStatus('error', 'Sync error');
+    try { localStorage.setItem('ledgerState', JSON.stringify(state)); } catch(e2) {}
+  }
+}
+
+// Debounced save — waits 1.5s after last change before writing to Drive
+function save() {
+  // Always save locally immediately
+  try { localStorage.setItem('ledgerState', JSON.stringify(state)); } catch(e) {}
+  // Debounce Drive save
+  if (driveReady) {
+    setSyncStatus('syncing', 'Saving…');
+    if (driveSaveTimer) clearTimeout(driveSaveTimer);
+    driveSaveTimer = setTimeout(driveSaveNow, 1500);
+  }
+}
+
+function saveSettings() {
+  state.income = parseFloat(document.getElementById('set-income').value) || 0;
+  state.balance = parseFloat(document.getElementById('set-balance').value) || 0;
+  state.nextPay = document.getElementById('set-nextpay').value || '';
+  state.payFreq = document.getElementById('set-freq').value;
+  save(); recalc();
+}
+
+// ── FORMAT ──
+function fmt(n, forceSign=false) {
+  const abs = Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const sign = n < 0 ? '-' : (forceSign ? '+' : '');
+  return sign + '$' + abs;
+}
+
+// ── RECALC ──
+function recalc() {
+  const now = new Date();
+  const todayD = now.getDate();
+  const totalBills = state.bills.reduce((s, b) => s + b.amt, 0);
+  const thisMonthTxns = state.transactions.filter(t => {
+    const d = new Date(t.date);
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  });
+  const spending = thisMonthTxns.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0);
+  const credits = thisMonthTxns.filter(t => t.amount > 0).reduce((s, t) => s + t.amount, 0);
+  const remaining = state.income - totalBills;
+
+  // stat cards
+  document.getElementById('st-balance').textContent = fmt(state.balance);
+  document.getElementById('st-income').textContent = fmt(state.income);
+  document.getElementById('st-bills').textContent = fmt(totalBills);
+  const remEl = document.getElementById('st-remaining');
+  remEl.textContent = fmt(remaining);
+  remEl.className = 'stat-val ' + (remaining < 0 ? 'red' : remaining < state.income * 0.1 ? 'amber' : 'green');
+
+  // sidebar
+  document.getElementById('sb-balance').textContent = fmt(state.balance);
+  document.getElementById('sb-bills-total').textContent = fmt(totalBills);
+  document.getElementById('sb-spend-total').textContent = fmt(spending);
+  document.getElementById('sb-income-total').textContent = fmt(credits);
+  const net = credits - spending - totalBills;
+  const netEl = document.getElementById('sb-net');
+  netEl.textContent = fmt(net, true);
+  netEl.style.color = net >= 0 ? 'var(--green)' : 'var(--red)';
+
+  // budget bar
+  const used = totalBills + spending;
+  const pct = state.income > 0 ? Math.min(100, Math.round(used / state.income * 100)) : 0;
+  document.getElementById('budget-pct-label').textContent = pct + '% of income used';
+  document.getElementById('budget-remain-label').textContent = fmt(Math.max(0, state.income - used)) + ' left';
+  const bar = document.getElementById('budget-bar');
+  bar.style.width = pct + '%';
+  bar.style.background = pct > 90 ? 'var(--red)' : pct > 70 ? 'var(--amber)' : 'var(--green)';
+  document.getElementById('budget-sub').textContent = `${fmt(used)} used of ${fmt(state.income)} income`;
+
+  // days to payday
+  let daysLeft = null;
+  if (state.nextPay) {
+    const np = new Date(state.nextPay + 'T00:00:00');
+    daysLeft = Math.ceil((np - now) / (1000 * 60 * 60 * 24));
+    if (daysLeft < 0) daysLeft = 0;
+    const payLabel = np.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    document.getElementById('days-count').textContent = daysLeft === 0 ? '🎉' : daysLeft;
+    document.getElementById('days-label-sub').textContent = daysLeft === 0 ? 'Payday!' : 'days remaining';
+    document.getElementById('payday-label').textContent = 'Next paycheck: ' + payLabel;
+    const cycleLen = state.payFreq === 'weekly' ? 7 : state.payFreq === 'biweekly' ? 14 : state.payFreq === 'semimonthly' ? 15 : 30;
+    const prog = Math.max(0, Math.min(100, Math.round((1 - daysLeft / cycleLen) * 100)));
+    document.getElementById('days-bar').style.width = prog + '%';
+    document.getElementById('days-bar').style.background = daysLeft <= 3 ? 'var(--red)' : daysLeft <= 7 ? 'var(--amber)' : 'var(--green)';
+
+    const dailyAmt = daysLeft > 0 ? state.balance / daysLeft : state.balance;
+    document.getElementById('sb-daily').textContent = fmt(Math.max(0, dailyAmt));
+    document.getElementById('sb-daily-sub').textContent = daysLeft + ' days until payday';
+    document.getElementById('sb-days-prog').style.width = prog + '%';
+    document.getElementById('sb-days-label').textContent = daysLeft + ' days remaining';
+  } else {
+    document.getElementById('days-count').textContent = '—';
+    document.getElementById('payday-label').textContent = 'Set your payday in Settings';
+  }
+
+  // alert
+  buildAlert(pct, daysLeft, totalBills, remaining);
+
+  // sidebar upcoming bills
+  buildSidebarUpcoming(todayD);
+  renderBillsList();
+  renderRecentTxns();
+  renderCalendar();
+  renderCatChips();
+  renderTransactions();
+}
+
+function buildAlert(pct, daysLeft, totalBills, remaining) {
+  const area = document.getElementById('alert-area');
+  let cls, icon, title, body;
+  if (remaining < 0) {
+    cls = 'alert-red'; icon = '⚠️';
+    title = 'Bills exceed income';
+    body = `Your total bills (${fmt(totalBills)}) exceed your monthly income (${fmt(state.income)}). Consider reviewing subscriptions or expenses.`;
+  } else if (pct >= 90) {
+    cls = 'alert-red'; icon = '🔴';
+    title = 'Budget critical';
+    body = `You've used ${pct}% of your income this month. Only ${fmt(state.income * (1 - pct / 100))} remains.`;
+  } else if (pct >= 70 || (daysLeft !== null && daysLeft <= 5)) {
+    cls = 'alert-amber'; icon = '🟡';
+    title = daysLeft !== null && daysLeft <= 5 ? `Payday in ${daysLeft} day${daysLeft === 1 ? '' : 's'}` : 'Budget getting tight';
+    body = `You've used ${pct}% of your income. Current balance: ${fmt(state.balance)}.` + (daysLeft !== null ? ` Your next paycheck arrives in ${daysLeft} day${daysLeft === 1 ? '' : 's'}.` : '');
+  } else {
+    cls = 'alert-green'; icon = '✅';
+    title = 'Finances look healthy';
+    body = `${pct}% of income used. Balance: ${fmt(state.balance)}. ${daysLeft !== null ? `${daysLeft} days until payday.` : ''}`;
+  }
+  area.innerHTML = `<div class="alert-banner ${cls}"><div class="alert-icon">${icon}</div><div><div class="alert-title">${title}</div><div class="alert-body">${body}</div></div></div>`;
+}
+
+function buildSidebarUpcoming(todayD) {
+  const sorted = [...state.bills].sort((a, b) => {
+    const da = a.due >= todayD ? a.due - todayD : 31 + a.due - todayD;
+    const db = b.due >= todayD ? b.due - todayD : 31 + b.due - todayD;
+    return da - db;
+  }).slice(0, 5);
+  const el = document.getElementById('sidebar-upcoming');
+  if (!sorted.length) { el.innerHTML = '<div class="empty-state" style="padding:12px">No bills added</div>'; return; }
+  el.innerHTML = sorted.map(b => {
+    const diff = b.due >= todayD ? b.due - todayD : 31 + b.due - todayD;
+    const label = diff === 0 ? 'Today' : diff === 1 ? 'Tomorrow' : `${diff}d`;
+    const col = diff === 0 ? 'var(--red)' : diff <= 3 ? 'var(--amber)' : 'var(--text3)';
+    return `<div class="upcoming-bill"><span class="ub-days" style="color:${col}">${label}</span><span class="ub-name">${b.name}</span><span class="ub-amt">${fmt(b.amt)}</span></div>`;
+  }).join('');
+}
+
+// ── INCOME TAB ──
+function calcIncome() {
+  const id = state.incomeData;
+  id.gross = parseFloat(document.getElementById('inc-gross').value) || 0;
+  id.freq = document.getElementById('inc-freq').value;
+  id.nextPay = document.getElementById('inc-nextpay').value || '';
+  id.taxFederal = parseFloat(document.getElementById('tax-federal').value) || 0;
+  id.taxState = parseFloat(document.getElementById('tax-state').value) || 0;
+  id.taxSS = parseFloat(document.getElementById('tax-ss').value) || 0;
+  id.taxMedicare = parseFloat(document.getElementById('tax-medicare').value) || 0;
+
+  const perYear = { weekly:52, biweekly:26, semimonthly:24, monthly:12 };
+  const periods = perYear[id.freq] || 26;
+  const gross = id.gross;
+
+  // Pre-tax
+  const pretaxTotal = id.pretax.reduce((s,d) => s + (d.type === 'pct' ? gross * d.amt / 100 : d.amt), 0);
+  const taxableIncome = Math.max(0, gross - pretaxTotal);
+
+  // Taxes on taxable income
+  const totalTaxPct = id.taxFederal + id.taxState + id.taxSS + id.taxMedicare;
+  const taxesTotal = taxableIncome * totalTaxPct / 100;
+
+  // Post-tax
+  const posttaxTotal = id.posttax.reduce((s,d) => s + (d.type === 'pct' ? gross * d.amt / 100 : d.amt), 0);
+
+  const net = gross - pretaxTotal - taxesTotal - posttaxTotal;
+  const effRate = gross > 0 ? ((pretaxTotal + taxesTotal + posttaxTotal) / gross * 100).toFixed(1) : 0;
+
+  // Update summary
+  document.getElementById('ps-gross').textContent = fmt(gross);
+  document.getElementById('ps-gross-annual').textContent = 'Annual: ' + fmt(gross * periods);
+  document.getElementById('ps-pretax').textContent = pretaxTotal > 0 ? '-' + fmt(pretaxTotal) : '$0.00';
+  document.getElementById('ps-pretax-annual').textContent = 'Annual: -' + fmt(pretaxTotal * periods);
+  document.getElementById('ps-taxes').textContent = taxesTotal > 0 ? '-' + fmt(taxesTotal) : '$0.00';
+  document.getElementById('ps-taxes-annual').textContent = 'Annual: -' + fmt(taxesTotal * periods);
+  document.getElementById('ps-posttax').textContent = posttaxTotal > 0 ? '-' + fmt(posttaxTotal) : '$0.00';
+  document.getElementById('ps-posttax-annual').textContent = 'Annual: -' + fmt(posttaxTotal * periods);
+  document.getElementById('ps-net').textContent = fmt(Math.max(0, net));
+  document.getElementById('ps-net-annual').textContent = 'Annual: ' + fmt(Math.max(0, net) * periods);
+  document.getElementById('ps-eff-rate').textContent = effRate + '%';
+  document.getElementById('ps-ann-gross').textContent = fmt(gross * periods);
+  document.getElementById('ps-ann-net').textContent = fmt(Math.max(0, net) * periods);
+  const monthlyNet = Math.max(0, net) * periods / 12;
+  document.getElementById('ps-monthly-net').textContent = fmt(monthlyNet);
+
+  // Sync to main state so dashboard uses it
+  if (net > 0) {
+    state.income = parseFloat(monthlyNet.toFixed(2));
+    document.getElementById('set-income').value = state.income.toFixed(2);
+  }
+  if (id.nextPay) {
+    state.nextPay = id.nextPay;
+    state.payFreq = id.freq;
+    document.getElementById('set-nextpay').value = id.nextPay;
+    document.getElementById('set-freq').value = id.freq;
+  }
+  save(); recalc();
+}
+
+function addDeduction(type) {
+  const nameEl = document.getElementById(type === 'pretax' ? 'pt-name' : 'pst-name');
+  const amtEl  = document.getElementById(type === 'pretax' ? 'pt-amt'  : 'pst-amt');
+  const typeEl = document.getElementById(type === 'pretax' ? 'pt-type' : 'pst-type');
+  const name = nameEl.value.trim();
+  const amt  = parseFloat(amtEl.value);
+  if (!name || !amt) return;
+  const arr = type === 'pretax' ? state.incomeData.pretax : state.incomeData.posttax;
+  arr.push({ name, amt, type: typeEl.value });
+  nameEl.value = ''; amtEl.value = '';
+  renderDeductionList(type);
+  calcIncome();
+}
+
+function deleteDeduction(type, i) {
+  const arr = type === 'pretax' ? state.incomeData.pretax : state.incomeData.posttax;
+  arr.splice(i, 1);
+  renderDeductionList(type);
+  calcIncome();
+}
+
+function renderDeductionList(type) {
+  const arr = type === 'pretax' ? state.incomeData.pretax : state.incomeData.posttax;
+  const el  = document.getElementById(type === 'pretax' ? 'pretax-list' : 'posttax-list');
+  if (!arr.length) {
+    el.innerHTML = `<div style="font-size:12px;color:var(--text3);padding:8px 0">No ${type === 'pretax' ? 'pre-tax' : 'post-tax'} deductions added.</div>`;
+    return;
+  }
+  const gross = parseFloat(document.getElementById('inc-gross').value) || 0;
+  el.innerHTML = arr.map((d, i) => {
+    const actual = d.type === 'pct' ? gross * d.amt / 100 : d.amt;
+    const label  = d.type === 'pct' ? `${d.amt}% = ${fmt(actual)}` : fmt(d.amt);
+    return `<div class="bill-row">
+      <div class="bill-name">${d.name}</div>
+      <div style="font-size:12px;color:var(--text3)">${label} / paycheck</div>
+      <button class="btn btn-danger" style="padding:4px 10px;font-size:11px" onclick="deleteDeduction('${type}',${i})">Remove</button>
+    </div>`;
+  }).join('');
+}
+
+// ── PAYCHECK HISTORY ──
+function openPaycheckModal(idx = -1) {
+  const el = document.getElementById('modal-paycheck-title');
+  document.getElementById('edit-paycheck-idx').value = idx;
+  if (idx >= 0) {
+    el.textContent = 'Edit Paycheck';
+    const p = state.paychecks[idx];
+    document.getElementById('ph-date').value = p.date;
+    document.getElementById('ph-net').value = p.net;
+    document.getElementById('ph-gross').value = p.gross || '';
+    document.getElementById('ph-taxes').value = p.taxes || '';
+    document.getElementById('ph-pretax').value = p.pretax || '';
+    document.getElementById('ph-posttax').value = p.posttax || '';
+    document.getElementById('ph-notes').value = p.notes || '';
+  } else {
+    el.textContent = 'Log Paycheck';
+    const today = new Date().toISOString().slice(0,10);
+    document.getElementById('ph-date').value = today;
+    document.getElementById('ph-net').value = '';
+    document.getElementById('ph-gross').value = state.incomeData.gross || '';
+    document.getElementById('ph-taxes').value = '';
+    document.getElementById('ph-pretax').value = '';
+    document.getElementById('ph-posttax').value = '';
+    document.getElementById('ph-notes').value = '';
+  }
+  document.getElementById('modal-paycheck').classList.add('open');
+}
+
+function savePaycheck() {
+  const net = parseFloat(document.getElementById('ph-net').value);
+  const date = document.getElementById('ph-date').value;
+  if (!net || !date) { alert('Date and net amount are required.'); return; }
+  const entry = {
+    date,
+    net,
+    gross:    parseFloat(document.getElementById('ph-gross').value)   || null,
+    taxes:    parseFloat(document.getElementById('ph-taxes').value)   || null,
+    pretax:   parseFloat(document.getElementById('ph-pretax').value)  || null,
+    posttax:  parseFloat(document.getElementById('ph-posttax').value) || null,
+    notes:    document.getElementById('ph-notes').value.trim(),
+    source:   'manual'
+  };
+  const idx = parseInt(document.getElementById('edit-paycheck-idx').value);
+  if (idx >= 0) {
+    state.paychecks[idx] = { ...state.paychecks[idx], ...entry };
+  } else {
+    state.paychecks.push(entry);
+  }
+  // deduplicate by date+net (keep latest manual over auto)
+  state.paychecks.sort((a,b) => new Date(b.date) - new Date(a.date));
+  syncAvgIncomeFromPaychecks();
+  save(); recalc(); renderPaycheckHistory();
+  closeModal('modal-paycheck');
+}
+
+function deletePaycheck(idx) {
+  if (!confirm('Remove this paycheck entry?')) return;
+  state.paychecks.splice(idx, 1);
+  syncAvgIncomeFromPaychecks();
+  save(); recalc(); renderPaycheckHistory();
+}
+
+function syncAvgIncomeFromPaychecks() {
+  if (!state.paychecks.length) return;
+  // Use last 6 paychecks to compute average net
+  const recent = [...state.paychecks].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,6);
+  const avg = recent.reduce((s,p) => s + p.net, 0) / recent.length;
+  const perYear = { weekly:52, biweekly:26, semimonthly:24, monthly:12 };
+  const periods = perYear[state.incomeData.freq] || 26;
+  const monthlyNet = avg * periods / 12;
+  state.income = parseFloat(monthlyNet.toFixed(2));
+  document.getElementById('set-income').value = state.income.toFixed(2);
+  // Also update gross on income tab if we have it
+  const withGross = recent.filter(p => p.gross);
+  if (withGross.length) {
+    const avgGross = withGross.reduce((s,p) => s + p.gross, 0) / withGross.length;
+    state.incomeData.gross = parseFloat(avgGross.toFixed(2));
+    document.getElementById('inc-gross').value = state.incomeData.gross.toFixed(2);
+  }
+}
+
+function renderPaycheckHistory() {
+  const el = document.getElementById('paycheck-history-list');
+  const avgEl = document.getElementById('ph-avg-label');
+  if (!state.paychecks || !state.paychecks.length) {
+    el.innerHTML = '<div class="empty-state">No paychecks logged yet. Import a CSV or click "+ Log Paycheck" to add one manually.</div>';
+    if (avgEl) avgEl.textContent = '';
+    return;
+  }
+  const sorted = [...state.paychecks].sort((a,b) => new Date(b.date)-new Date(a.date));
+  // Compute avg from last 6
+  const recent6 = sorted.slice(0,6);
+  const avg = recent6.reduce((s,p)=>s+p.net,0)/recent6.length;
+  if (avgEl) avgEl.textContent = `Avg (last ${recent6.length}): ${fmt(avg)} / paycheck`;
+
+  el.innerHTML = `
+    <div style="display:grid;grid-template-columns:100px 1fr 90px 90px 90px 90px 120px auto;gap:0;margin-bottom:8px">
+      <div style="font-size:11px;color:var(--text3);font-weight:600;padding:6px 8px">Date</div>
+      <div style="font-size:11px;color:var(--text3);font-weight:600;padding:6px 8px">Notes</div>
+      <div style="font-size:11px;color:var(--text3);font-weight:600;padding:6px 8px;text-align:right">Gross</div>
+      <div style="font-size:11px;color:var(--text3);font-weight:600;padding:6px 8px;text-align:right">Pre-tax</div>
+      <div style="font-size:11px;color:var(--text3);font-weight:600;padding:6px 8px;text-align:right">Taxes</div>
+      <div style="font-size:11px;color:var(--text3);font-weight:600;padding:6px 8px;text-align:right">Post-tax</div>
+      <div style="font-size:11px;color:var(--text3);font-weight:600;padding:6px 8px;text-align:right">Net</div>
+      <div></div>
+    </div>
+    ${sorted.map((p, i) => {
+      const d = new Date(p.date+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+      const isAuto = p.source === 'csv';
+      const diffPrev = i < sorted.length-1 ? p.net - sorted[i+1].net : null;
+      const diffTag = diffPrev !== null
+        ? `<span style="font-size:10px;color:${diffPrev>0?'var(--green)':diffPrev<0?'var(--red)':'var(--text3)'};margin-left:4px">${diffPrev>0?'▲':'▼'}${fmt(Math.abs(diffPrev))}</span>`
+        : '';
+      return `<div style="display:grid;grid-template-columns:100px 1fr 90px 90px 90px 90px 120px auto;gap:0;border-top:1px solid var(--border);align-items:center">
+        <div style="font-size:12px;color:var(--text2);padding:8px 8px">${d}</div>
+        <div style="font-size:12px;color:var(--text3);padding:8px 8px">${p.notes||''} ${isAuto?'<span style="font-size:10px;background:var(--blue-dim);color:var(--blue);padding:1px 5px;border-radius:3px">auto</span>':''}</div>
+        <div style="font-size:13px;padding:8px 8px;text-align:right;color:var(--text2)">${p.gross?fmt(p.gross):'—'}</div>
+        <div style="font-size:13px;padding:8px 8px;text-align:right;color:var(--amber)">${p.pretax?'-'+fmt(p.pretax):'—'}</div>
+        <div style="font-size:13px;padding:8px 8px;text-align:right;color:var(--red)">${p.taxes?'-'+fmt(p.taxes):'—'}</div>
+        <div style="font-size:13px;padding:8px 8px;text-align:right;color:var(--amber)">${p.posttax?'-'+fmt(p.posttax):'—'}</div>
+        <div style="font-size:14px;font-weight:500;padding:8px 8px;text-align:right;color:var(--green)">${fmt(p.net)}${diffTag}</div>
+        <div style="padding:8px 4px;display:flex;gap:4px">
+          <button class="btn" style="padding:3px 8px;font-size:11px" onclick="openPaycheckModal(${i})">Edit</button>
+          <button class="btn btn-danger" style="padding:3px 8px;font-size:11px" onclick="deletePaycheck(${i})">✕</button>
+        </div>
+      </div>`;
+    }).join('')}`;
+}
+
+// ── BILLS ──
+function renderBillsList() {
+  const el = document.getElementById('bills-list');
+  if (!state.bills.length) { el.innerHTML = '<div class="empty-state">No bills added yet.</div>'; return; }
+  const todayD = new Date().getDate();
+  const catColors = { Housing:'var(--blue)', Insurance:'var(--amber)', Utilities:'var(--green)', Subscriptions:'var(--red)', Auto:'var(--amber)', Loan:'var(--red)', Other:'var(--text3)' };
+  el.innerHTML = [...state.bills].sort((a, b) => a.due - b.due).map((b, i) => {
+    const diff = b.due - todayD;
+    let badge, bc;
+    if (diff < 0) { badge = 'Paid'; bc = 'badge-paid'; }
+    else if (diff === 0) { badge = 'Due Today'; bc = 'badge-due'; }
+    else if (diff <= 5) { badge = `In ${diff}d`; bc = 'badge-soon'; }
+    else { badge = `Day ${b.due}`; bc = 'badge-upcoming'; }
+    const col = catColors[b.cat] || 'var(--text3)';
+    return `<div class="bill-row">
+      <div class="bill-dot" style="background:${col}"></div>
+      <div class="bill-name">${b.name}<br><span style="font-size:11px;color:var(--text3)">${b.cat}</span></div>
+      <span class="badge ${bc}">${badge}</span>
+      <div class="bill-due">Day ${b.due}</div>
+      <div class="bill-amt">${fmt(b.amt)}</div>
+      <button class="btn btn-danger" style="padding:4px 10px;font-size:11px" onclick="deleteBill(${i})">Remove</button>
+    </div>`;
+  }).join('');
+}
+
+function openAddBillModal() {
+  document.getElementById('m-bill-name').value = '';
+  document.getElementById('m-bill-amt').value = '';
+  document.getElementById('m-bill-due').value = '';
+  document.getElementById('modal-bill').classList.add('open');
+}
+function saveBill() {
+  const name = document.getElementById('m-bill-name').value.trim();
+  const amt = parseFloat(document.getElementById('m-bill-amt').value);
+  const due = parseInt(document.getElementById('m-bill-due').value);
+  const cat = document.getElementById('m-bill-cat').value;
+  if (!name || !amt || !due) return alert('Please fill in all fields.');
+  state.bills.push({ name, amt, due, cat });
+  save(); recalc();
+  closeModal('modal-bill');
+}
+function deleteBill(i) {
+  if (confirm('Remove this bill?')) { state.bills.splice(i, 1); save(); recalc(); }
+}
+
+// ── CALENDAR ──
+function renderCalendar() {
+  const title = document.getElementById('cal-title');
+  const grid = document.getElementById('cal-grid');
+  const now = new Date();
+  const today = now.getDate();
+  const todayM = now.getMonth();
+  const todayY = now.getFullYear();
+
+  title.textContent = new Date(calYear, calMonth, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+  const dows = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  let html = dows.map(d => `<div class="cal-dow">${d}</div>`).join('');
+
+  const firstDay = new Date(calYear, calMonth, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+  const daysInPrev = new Date(calYear, calMonth, 0).getDate();
+
+  // Build payday dates for this month
+  const paydays = getPaydaysForMonth(calYear, calMonth);
+
+  for (let i = 0; i < 42; i++) {
+    let day, isOther = false;
+    if (i < firstDay) { day = daysInPrev - firstDay + 1 + i; isOther = true; }
+    else if (i >= firstDay + daysInMonth) { day = i - firstDay - daysInMonth + 1; isOther = true; }
+    else { day = i - firstDay + 1; }
+
+    const isToday = !isOther && day === today && calMonth === todayM && calYear === todayY;
+    const cls = ['cal-day', isOther ? 'other-month' : '', isToday ? 'today' : ''].filter(Boolean).join(' ');
+
+    let events = '';
+    if (!isOther) {
+      // Bills
+      state.bills.forEach(b => {
+        if (b.due === day) {
+          events += `<div class="cal-event bill" title="${b.name}: ${fmt(b.amt)}">${b.name} ${fmt(b.amt)}</div>`;
+        }
+      });
+      // Paydays
+      if (paydays.includes(day)) {
+        events += `<div class="cal-event payday">💰 Payday</div>`;
+      }
+      // Balance snapshot on today
+      if (isToday) {
+        events += `<div class="cal-event balance">Bal: ${fmt(state.balance)}</div>`;
+      }
+    }
+
+    html += `<div class="${cls}"><div class="cal-dn">${day}</div>${events}</div>`;
+  }
+  grid.innerHTML = html;
+}
+
+function getPaydaysForMonth(year, month) {
+  if (!state.nextPay) return [];
+  const base = new Date(state.nextPay + 'T00:00:00');
+  const days = [];
+  if (state.payFreq === 'semimonthly') {
+    days.push(1, 15);
+  } else {
+    const interval = state.payFreq === 'weekly' ? 7 : state.payFreq === 'biweekly' ? 14 : 30;
+    // walk forward and backward from base
+    let d = new Date(base);
+    // walk to find occurrences in month
+    while (d.getFullYear() > year || (d.getFullYear() === year && d.getMonth() > month)) d.setDate(d.getDate() - interval);
+    while (d.getFullYear() < year || (d.getFullYear() === year && d.getMonth() < month)) d.setDate(d.getDate() + interval);
+    while (d.getMonth() === month && d.getFullYear() === year) {
+      days.push(d.getDate());
+      d.setDate(d.getDate() + interval);
+    }
+  }
+  return days;
+}
+
+function calPrev() { calMonth--; if (calMonth < 0) { calMonth = 11; calYear--; } renderCalendar(); }
+function calNext() { calMonth++; if (calMonth > 11) { calMonth = 0; calYear++; } renderCalendar(); }
+function calToday() { const n = new Date(); calYear = n.getFullYear(); calMonth = n.getMonth(); renderCalendar(); }
+
+// ── TRANSACTIONS ──
+let activeCategories = new Set();
+
+function renderCatChips() {
+  const cats = [...new Set(state.transactions.map(t => t.category).filter(Boolean))];
+  const el = document.getElementById('cat-chips');
+  if (!cats.length) { el.innerHTML = ''; return; }
+  el.innerHTML = cats.map(c => `<div class="chip ${activeCategories.has(c) ? 'active' : ''}" onclick="toggleCat('${c}')">${c}</div>`).join('');
+}
+
+function toggleCat(c) {
+  if (activeCategories.has(c)) activeCategories.delete(c);
+  else activeCategories.add(c);
+  renderCatChips(); renderTransactions();
+}
+
+function renderTransactions() {
+  const el = document.getElementById('txn-list');
+  const search = (document.getElementById('txn-search')?.value || '').toLowerCase();
+  let txns = [...state.transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
+  if (search) txns = txns.filter(t => t.description.toLowerCase().includes(search) || (t.category || '').toLowerCase().includes(search));
+  if (activeCategories.size) txns = txns.filter(t => activeCategories.has(t.category));
+  if (!txns.length) { el.innerHTML = '<div class="empty-state">No transactions found.</div>'; return; }
+  el.innerHTML = txns.slice(0, 200).map(t => {
+    const d = new Date(t.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' });
+    const cls = t.amount < 0 ? 'debit' : 'credit';
+    return `<div class="txn-row">
+      <div class="txn-date">${d}</div>
+      <div class="txn-desc">${t.description}</div>
+      <div class="txn-cat">${t.category || '—'}</div>
+      <div class="txn-amt ${cls}">${t.amount < 0 ? '-' : '+'}${fmt(Math.abs(t.amount))}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderRecentTxns() {
+  const el = document.getElementById('recent-txns');
+  const recent = [...state.transactions].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 8);
+  if (!recent.length) { el.innerHTML = '<div class="empty-state">No transactions imported yet.<br>Use the "Import CSV" button above to load your USAA export.</div>'; return; }
+  el.innerHTML = recent.map(t => {
+    const d = new Date(t.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const cls = t.amount < 0 ? 'debit' : 'credit';
+    return `<div class="txn-row">
+      <div class="txn-date">${d}</div>
+      <div class="txn-desc">${t.description}</div>
+      <div class="txn-cat">${t.category || '—'}</div>
+      <div class="txn-amt ${cls}">${t.amount < 0 ? '-' : '+'}${fmt(Math.abs(t.amount))}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── CSV IMPORT ──
+function openImportModal() {
+  document.getElementById('import-status').textContent = '';
+  document.getElementById('modal-import').classList.add('open');
+}
+function dragOver(e) { e.preventDefault(); document.getElementById('drop-zone').classList.add('drag-over'); }
+function dragLeave(e) { document.getElementById('drop-zone').classList.remove('drag-over'); }
+function dropFile(e) {
+  e.preventDefault();
+  document.getElementById('drop-zone').classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) processCSV(file);
+}
+function fileSelected(e) { if (e.target.files[0]) processCSV(e.target.files[0]); }
+
+function isPaycheckTransaction(t) {
+  const d = (t.description || '').toLowerCase();
+  return t.amount > 0 && (
+    d.includes('direct deposit') ||
+    d.includes('payroll') ||
+    d.includes('salary') ||
+    d.includes('ach credit') ||
+    d.includes('employer') ||
+    d.includes('paycheck') ||
+    d.includes('compensation')
+  );
+}
+
+function processCSV(file) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const text = e.target.result;
+    const parsed = parseUSAACSV(text);
+    if (parsed.length === 0) {
+      document.getElementById('import-status').textContent = '⚠️ Could not parse CSV. Make sure it\'s a USAA export.';
+      document.getElementById('import-status').style.color = 'var(--red)';
+      return;
+    }
+
+    // Merge transactions with deduplication
+    state.transactions = [...state.transactions, ...parsed];
+    const seenTxn = new Set();
+    state.transactions = state.transactions.filter(t => {
+      const key = t.date + '|' + t.description + '|' + t.amount;
+      if (seenTxn.has(key)) return false;
+      seenTxn.add(key); return true;
+    });
+
+    // Auto-detect paychecks from direct deposits
+    const detectedPaychecks = parsed.filter(isPaycheckTransaction);
+    let newPaycheckCount = 0;
+    detectedPaychecks.forEach(t => {
+      // Don't duplicate — check if a paycheck entry already exists for this date+amount
+      const alreadyLogged = state.paychecks.some(p =>
+        p.date === t.date && Math.abs(p.net - t.amount) < 0.01
+      );
+      if (!alreadyLogged) {
+        state.paychecks.push({
+          date: t.date,
+          net: t.amount,
+          gross: null,
+          taxes: null,
+          pretax: null,
+          posttax: null,
+          notes: t.description,
+          source: 'csv'
+        });
+        newPaycheckCount++;
+      }
+    });
+
+    // Sort paychecks newest first
+    state.paychecks.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    // If we found paychecks, sync average income
+    if (state.paychecks.length > 0) syncAvgIncomeFromPaychecks();
+
+    // Update balance from latest transaction with a balance column
+    const withBal = parsed.filter(t => t.balance != null);
+    if (withBal.length) {
+      const latest = withBal.sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+      if (latest.balance) {
+        state.balance = latest.balance;
+        document.getElementById('set-balance').value = latest.balance;
+      }
+    }
+
+    // Update next payday estimate based on most recent paycheck date + frequency
+    if (newPaycheckCount > 0 && state.paychecks.length >= 1) {
+      const latestPaycheck = state.paychecks[0];
+      const interval = state.incomeData.freq === 'weekly' ? 7
+        : state.incomeData.freq === 'biweekly' ? 14
+        : state.incomeData.freq === 'semimonthly' ? 15
+        : 30;
+      const nextDate = new Date(latestPaycheck.date + 'T00:00:00');
+      nextDate.setDate(nextDate.getDate() + interval);
+      const nextStr = nextDate.toISOString().slice(0, 10);
+      // Only update if it's in the future
+      if (new Date(nextStr) >= new Date()) {
+        state.nextPay = nextStr;
+        state.incomeData.nextPay = nextStr;
+        document.getElementById('set-nextpay').value = nextStr;
+        document.getElementById('inc-nextpay').value = nextStr;
+      }
+    }
+
+    save(); recalc(); renderPaycheckHistory();
+
+    const paycheckMsg = newPaycheckCount > 0
+      ? ` · 💰 ${newPaycheckCount} paycheck${newPaycheckCount > 1 ? 's' : ''} auto-detected & logged`
+      : '';
+    document.getElementById('import-status').textContent =
+      `✅ Imported ${parsed.length} transactions successfully!${paycheckMsg}`;
+    document.getElementById('import-status').style.color = 'var(--green)';
+  };
+  reader.readAsText(file);
+}
+
+function parseUSAACSV(text) {
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  if (lines.length < 2) return [];
+  const header = lines[0].toLowerCase().split(',').map(h => h.replace(/"/g,'').trim());
+  const txns = [];
+
+  // Detect USAA format
+  // Format 1: Date, Description, Original Description, Category, Amount, Status
+  // Format 2: Date, Transaction, Debit, Credit, Balance
+  const idxDate = header.findIndex(h => h.includes('date'));
+  const idxDesc = header.findIndex(h => h.includes('description') || h.includes('transaction'));
+  const idxAmt = header.findIndex(h => h === 'amount');
+  const idxDebit = header.findIndex(h => h === 'debit');
+  const idxCredit = header.findIndex(h => h === 'credit');
+  const idxCat = header.findIndex(h => h === 'category');
+  const idxBal = header.findIndex(h => h === 'balance');
+
+  for (let i = 1; i < lines.length; i++) {
+    const cols = splitCSVLine(lines[i]);
+    if (!cols || cols.length < 2) continue;
+    const rawDate = cols[idxDate] || '';
+    const desc = cols[idxDesc] || '';
+    let amount = 0;
+    let balance = null;
+
+    if (idxAmt >= 0) {
+      amount = parseFloat((cols[idxAmt] || '0').replace(/[$,]/g, '')) || 0;
+    } else if (idxDebit >= 0 || idxCredit >= 0) {
+      const debit = parseFloat((cols[idxDebit] || '0').replace(/[$,]/g, '')) || 0;
+      const credit = parseFloat((cols[idxCredit] || '0').replace(/[$,]/g, '')) || 0;
+      amount = credit - debit;
+    }
+    if (idxBal >= 0) balance = parseFloat((cols[idxBal] || '').replace(/[$,]/g, '')) || null;
+
+    const dateStr = normalizeDate(rawDate);
+    if (!dateStr) continue;
+
+    txns.push({
+      date: dateStr,
+      description: desc.replace(/^"|"$/g,'').trim(),
+      amount: amount,
+      category: idxCat >= 0 ? (cols[idxCat] || '').replace(/^"|"$/g,'').trim() : categorize(desc),
+      balance: balance
+    });
+  }
+  return txns;
+}
+
+function splitCSVLine(line) {
+  const result = [];
+  let cur = '', inQ = false;
+  for (let c of line) {
+    if (c === '"') { inQ = !inQ; }
+    else if (c === ',' && !inQ) { result.push(cur.trim()); cur = ''; }
+    else { cur += c; }
+  }
+  result.push(cur.trim());
+  return result;
+}
+
+function normalizeDate(raw) {
+  raw = raw.replace(/"/g,'').trim();
+  // MM/DD/YYYY
+  let m = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (m) return `${m[3]}-${m[1].padStart(2,'0')}-${m[2].padStart(2,'0')}`;
+  // YYYY-MM-DD
+  m = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (m) return raw;
+  return null;
+}
+
+function categorize(desc) {
+  const d = desc.toLowerCase();
+  if (d.includes('grocery') || d.includes('walmart') || d.includes('kroger') || d.includes('safeway') || d.includes('heb') || d.includes('costco') || d.includes('whole foods')) return 'Groceries';
+  if (d.includes('restaurant') || d.includes('mcdonald') || d.includes('starbucks') || d.includes('chick-fil') || d.includes('pizza') || d.includes('taco') || d.includes('doordash') || d.includes('ubereats') || d.includes('grubhub')) return 'Dining';
+  if (d.includes('uber') || d.includes('lyft') || d.includes('gas') || d.includes('shell') || d.includes('exxon') || d.includes('bp ') || d.includes('chevron') || d.includes('parking')) return 'Transport';
+  if (d.includes('netflix') || d.includes('hulu') || d.includes('spotify') || d.includes('disney') || d.includes('amazon prime') || d.includes('apple') || d.includes('youtube')) return 'Subscriptions';
+  if (d.includes('amazon') || d.includes('target') || d.includes('best buy') || d.includes('ebay')) return 'Shopping';
+  if (d.includes('direct deposit') || d.includes('payroll') || d.includes('salary') || d.includes('ach credit')) return 'Income';
+  if (d.includes('insurance') || d.includes('usaa')) return 'Insurance';
+  if (d.includes('electric') || d.includes('water') || d.includes('internet') || d.includes('at&t') || d.includes('verizon') || d.includes('comcast')) return 'Utilities';
+  if (d.includes('mortgage') || d.includes('rent') || d.includes('lease')) return 'Housing';
+  return 'Other';
+}
+
+// ── CREDIT CARDS ──
+
+const CC_COLORS = ['var(--blue)','var(--green)','var(--red)','var(--amber)','#a78bfa','#f472b6'];
+
+function openAddCardModal(idx = -1) {
+  document.getElementById('edit-card-idx').value = idx;
+  const title = document.getElementById('modal-card-title');
+  if (idx >= 0) {
+    title.textContent = 'Edit Card';
+    const c = state.creditCards[idx];
+    document.getElementById('cc-name').value    = c.name;
+    document.getElementById('cc-balance').value = c.balance;
+    document.getElementById('cc-limit').value   = c.limit || '';
+    document.getElementById('cc-apr').value     = c.apr;
+    document.getElementById('cc-minpay').value  = c.minPay;
+    document.getElementById('cc-payment').value = c.payment;
+    document.getElementById('cc-due').value     = c.due || '';
+    document.getElementById('cc-color').value   = c.color || 'var(--blue)';
+  } else {
+    title.textContent = 'Add Credit Card';
+    ['cc-name','cc-balance','cc-limit','cc-apr','cc-minpay','cc-payment','cc-due'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('cc-color').value = 'var(--blue)';
+  }
+  document.getElementById('modal-card').classList.add('open');
+}
+
+function saveCard() {
+  const name    = document.getElementById('cc-name').value.trim();
+  const balance = parseFloat(document.getElementById('cc-balance').value) || 0;
+  const apr     = parseFloat(document.getElementById('cc-apr').value) || 0;
+  const minPay  = parseFloat(document.getElementById('cc-minpay').value) || 0;
+  const payment = parseFloat(document.getElementById('cc-payment').value) || 0;
+  if (!name) { alert('Please enter a card name.'); return; }
+  const card = {
+    name, balance, apr, minPay, payment,
+    limit:   parseFloat(document.getElementById('cc-limit').value) || null,
+    due:     parseInt(document.getElementById('cc-due').value) || null,
+    color:   document.getElementById('cc-color').value,
+    history: []
+  };
+  const idx = parseInt(document.getElementById('edit-card-idx').value);
+  if (idx >= 0) {
+    card.history = state.creditCards[idx].history || [];
+    state.creditCards[idx] = card;
+  } else {
+    state.creditCards.push(card);
+  }
+  save(); renderCreditCards();
+  closeModal('modal-card');
+}
+
+function deleteCard(idx) {
+  if (!confirm('Remove this card?')) return;
+  state.creditCards.splice(idx, 1);
+  save(); renderCreditCards();
+}
+
+// Core payoff calculator: given balance, monthly rate, monthly payment
+// Returns { months, totalInterest, payoffDate }
+function calcPayoff(balance, apr, monthlyPayment) {
+  if (!balance || !monthlyPayment) return { months: null, totalInterest: 0, payoffDate: null };
+  const monthlyRate = apr / 100 / 12;
+  if (monthlyPayment <= balance * monthlyRate) return { months: Infinity, totalInterest: Infinity, payoffDate: null };
+  if (monthlyRate === 0) {
+    const months = Math.ceil(balance / monthlyPayment);
+    const d = new Date(); d.setMonth(d.getMonth() + months);
+    return { months, totalInterest: 0, payoffDate: d };
+  }
+  const months = Math.ceil(-Math.log(1 - (balance * monthlyRate) / monthlyPayment) / Math.log(1 + monthlyRate));
+  const totalInterest = Math.max(0, monthlyPayment * months - balance);
+  const d = new Date(); d.setMonth(d.getMonth() + months);
+  return { months, totalInterest, payoffDate: d };
+}
+
+function fmtDate(d) {
+  if (!d) return '—';
+  return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+}
+
+function renderCreditCards() {
+  const cards = state.creditCards;
+  const grid  = document.getElementById('cc-cards-grid');
+
+  if (!cards.length) {
+    grid.innerHTML = '<div class="empty-state card" style="grid-column:1/-1">No credit cards added yet. Click "+ Add Card" to get started.</div>';
+    updateCCSummary();
+    return;
+  }
+
+  grid.innerHTML = cards.map((c, i) => {
+    const { months, totalInterest, payoffDate } = calcPayoff(c.balance, c.apr, c.payment);
+    const monthlyInterest = c.balance * (c.apr / 100 / 12);
+    const principal       = Math.max(0, c.payment - monthlyInterest);
+    const pct             = c.limit ? Math.round(c.balance / c.limit * 100) : null;
+    const pctBar          = pct !== null ? pct : 0;
+    const barColor        = pct > 80 ? 'var(--red)' : pct > 50 ? 'var(--amber)' : c.color;
+
+    const payoffLabel = months === Infinity ? '⚠️ Payment too low — balance growing'
+      : months ? `Paid off ${fmtDate(payoffDate)} · ${months} months`
+      : 'Enter payment to see payoff';
+
+    const dueLabel = c.due ? `Due the ${['','1st','2nd','3rd','4th','5th','6th','7th','8th','9th','10th','11th','12th','13th','14th','15th','16th','17th','18th','19th','20th','21st','22nd','23rd','24th','25th','26th','27th','28th','29th','30th','31st'][c.due]}` : '';
+
+    return `
+    <div class="cc-card">
+      <div class="cc-card-accent" style="background:${c.color}"></div>
+      <div class="cc-card-header">
+        <div>
+          <div class="cc-card-name">${c.name}</div>
+          <div class="cc-card-due">${dueLabel}</div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="btn" style="padding:4px 10px;font-size:11px" onclick="openAddCardModal(${i})">Edit</button>
+          <button class="btn btn-danger" style="padding:4px 10px;font-size:11px" onclick="deleteCard(${i})">✕</button>
+        </div>
+      </div>
+
+      <div class="cc-balance" style="color:${c.color}">${fmt(c.balance)}</div>
+      <div class="cc-balance-label">${c.limit ? `of ${fmt(c.limit)} limit` : 'current balance'}</div>
+
+      ${pct !== null ? `
+        <div class="cc-progress-wrap">
+          <div class="cc-progress-fill" style="width:${Math.min(pctBar,100)}%;background:${barColor}"></div>
+        </div>
+        <div class="cc-pct">${pct}% utilization</div>
+      ` : ''}
+
+      <div class="cc-row">
+        <span class="cc-row-label">APR</span>
+        <span class="cc-row-val" style="color:var(--red)">${c.apr}%</span>
+      </div>
+      <div class="cc-row">
+        <span class="cc-row-label">Monthly interest</span>
+        <span class="cc-row-val" style="color:var(--red)">${fmt(monthlyInterest)}</span>
+      </div>
+      <div class="cc-row">
+        <span class="cc-row-label">Your payment</span>
+        <span class="cc-row-val" style="color:var(--green)">${fmt(c.payment)}</span>
+      </div>
+      <div class="cc-row">
+        <span class="cc-row-label">Goes to principal</span>
+        <span class="cc-row-val" style="color:var(--green)">${fmt(principal)}</span>
+      </div>
+      ${months !== Infinity && months ? `
+      <div class="cc-row">
+        <span class="cc-row-label">Total interest cost</span>
+        <span class="cc-row-val" style="color:var(--amber)">${fmt(totalInterest)}</span>
+      </div>` : ''}
+
+      <div class="cc-payoff-badge" style="background:${months===Infinity?'var(--red-dim)':'var(--blue-dim)'};color:${months===Infinity?'var(--red)':'var(--blue)'}">
+        ${payoffLabel}
+      </div>
+
+      <div class="cc-inputs">
+        <div class="cc-input-group">
+          <label>Balance</label>
+          <input type="number" value="${c.balance}" min="0" step="0.01"
+            onchange="updateCard(${i},'balance',this.value)">
+        </div>
+        <div class="cc-input-group">
+          <label>APR %</label>
+          <input type="number" value="${c.apr}" min="0" step="0.01"
+            onchange="updateCard(${i},'apr',this.value)">
+        </div>
+        <div class="cc-input-group">
+          <label>Min Payment</label>
+          <input type="number" value="${c.minPay}" min="0" step="0.01"
+            onchange="updateCard(${i},'minPay',this.value)">
+        </div>
+        <div class="cc-input-group">
+          <label>Monthly Payment</label>
+          <input type="number" value="${c.payment}" min="0" step="0.01"
+            onchange="updateCard(${i},'payment',this.value)">
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  updateCCSummary();
+}
+
+function updateCard(idx, field, value) {
+  state.creditCards[idx][field] = parseFloat(value) || 0;
+  save(); renderCreditCards();
+}
+
+function updateCCSummary() {
+  const cards = state.creditCards;
+  if (!cards.length) {
+    document.getElementById('cc-total-balance').textContent  = '$0';
+    document.getElementById('cc-total-payment').textContent  = '$0';
+    document.getElementById('cc-total-interest').textContent = '$0';
+    document.getElementById('cc-total-cost').textContent     = '$0';
+    document.getElementById('cc-debtfree-date').textContent  = '—';
+    document.getElementById('cc-debtfree-sub').textContent   = 'Add cards below to see your debt-free date';
+    document.getElementById('cc-timeline').innerHTML = '';
+    return;
+  }
+
+  const totalBal     = cards.reduce((s,c) => s + c.balance, 0);
+  const totalPay     = cards.reduce((s,c) => s + c.payment, 0);
+  const totalInt     = cards.reduce((s,c) => s + c.balance * (c.apr / 100 / 12), 0);
+  const allPayoffs   = cards.map(c => calcPayoff(c.balance, c.apr, c.payment));
+  const totalCost    = allPayoffs.reduce((s,p) => s + (isFinite(p.totalInterest) ? p.totalInterest : 0), 0) + totalBal;
+  const maxMonths    = Math.max(...allPayoffs.map(p => isFinite(p.months) && p.months ? p.months : 0));
+  const debtFreeDate = maxMonths ? (() => { const d = new Date(); d.setMonth(d.getMonth() + maxMonths); return d; })() : null;
+
+  document.getElementById('cc-total-balance').textContent  = fmt(totalBal);
+  document.getElementById('cc-total-payment').textContent  = fmt(totalPay);
+  document.getElementById('cc-total-interest').textContent = fmt(totalInt);
+  document.getElementById('cc-total-cost').textContent     = fmt(totalCost);
+  document.getElementById('cc-debtfree-date').textContent  = debtFreeDate ? fmtDate(debtFreeDate) : '—';
+  document.getElementById('cc-debtfree-sub').textContent   = debtFreeDate
+    ? `${maxMonths} months away · Pay off all ${cards.length} card${cards.length>1?'s':''} completely`
+    : 'Increase payments to see your debt-free date';
+
+  // Timeline bars
+  const timelineEl = document.getElementById('cc-timeline');
+  if (!maxMonths) { timelineEl.innerHTML = ''; return; }
+  timelineEl.innerHTML = cards.map((c,i) => {
+    const p = allPayoffs[i];
+    if (!p.months || !isFinite(p.months)) return '';
+    const pct = Math.round(p.months / maxMonths * 100);
+    return `
+      <div style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:4px">
+          <span>${c.name}</span><span style="color:var(--text3)">${fmtDate(p.payoffDate)} · ${p.months} mo</span>
+        </div>
+        <div class="timeline-bar-bg">
+          <div class="timeline-fill" style="width:${pct}%;background:${c.color}">${fmt(c.balance)}</div>
+        </div>
+      </div>`;
+  }).join('');
+
+  // Comparison
+  renderCCComparison(cards, allPayoffs, totalBal, maxMonths);
+}
+
+function adjustExtra(delta) {
+  const el  = document.getElementById('cc-extra-payment');
+  const val = Math.max(0, (parseFloat(el.value) || 0) + delta);
+  el.value  = val;
+  renderCreditCards();
+}
+
+function renderCCComparison(cards, currentPayoffs, totalBal, currentMaxMonths) {
+  const extra = Math.max(0, parseFloat(document.getElementById('cc-extra-payment')?.value) || 200);
+
+  // Update the label in the 3rd column header
+  const labelEl = document.getElementById('cmp-acc-label-amt');
+  if (labelEl) labelEl.textContent = extra;
+
+  // ── Helper: build avalanche payoffs given an extra amount on top of current payments ──
+  function avalanchePayoffs(extraBudget) {
+    // Sort by APR descending, apply extra to highest first
+    const indexed = cards.map((c, i) => ({ ...c, origIdx: i }))
+                         .sort((a, b) => b.apr - a.apr);
+    const payments = cards.map(c => c.payment);
+    let remaining  = extraBudget;
+    for (const c of indexed) {
+      if (remaining <= 0) break;
+      payments[c.origIdx] += remaining;
+      remaining = 0; // all extra to first (highest APR) card
+    }
+    return cards.map((c, i) => calcPayoff(c.balance, c.apr, payments[i]));
+  }
+
+  // ── Scenario 1: Minimum only ──
+  const minPayoffs   = cards.map(c => {
+    const minFloor = c.balance * (c.apr / 100 / 12) + 1; // must exceed interest
+    return calcPayoff(c.balance, c.apr, Math.max(c.minPay || 0, minFloor));
+  });
+
+  // ── Scenario 2: Current plan ──
+  // Already passed in as currentPayoffs
+
+  // ── Scenario 3: Accelerated ──
+  const accPayoffs   = avalanchePayoffs(extra);
+
+  // ── Compute summary metrics ──
+  function scenarioSummary(payoffs) {
+    const maxMo  = Math.max(...payoffs.map(p => isFinite(p.months) && p.months ? p.months : 0));
+    const totInt = payoffs.reduce((s, p) => s + (isFinite(p.totalInterest) ? p.totalInterest : 0), 0);
+    const date   = maxMo ? (() => { const d = new Date(); d.setMonth(d.getMonth() + maxMo); return d; })() : null;
+    return { maxMo, totInt, date };
+  }
+
+  const minS = scenarioSummary(minPayoffs);
+  const curS = scenarioSummary(currentPayoffs);
+  const accS = scenarioSummary(accPayoffs);
+
+  // Overall max months (across all scenarios) for proportional bars
+  const globalMax = Math.max(minS.maxMo, curS.maxMo, accS.maxMo, 1);
+
+  // ── Helper: render per-card mini timeline inside a column ──
+  function miniTimeline(payoffs, barColor, containerId) {
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    if (!cards.length) { el.innerHTML = ''; return; }
+    el.innerHTML = cards.map((c, i) => {
+      const p   = payoffs[i];
+      const mo  = isFinite(p.months) && p.months ? p.months : null;
+      const dt  = p.payoffDate;
+      const pct = mo ? Math.max(8, Math.round(mo / globalMax * 100)) : 100;
+      const label = mo ? fmtDate(dt) : '⚠️ Never';
+      const moLabel = mo ? `${mo} mo` : '';
+      return `
+        <div style="margin-bottom:8px">
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-bottom:3px">
+            <span style="font-weight:500;color:var(--text2)">${c.name}</span>
+            <span>${moLabel}</span>
+          </div>
+          <div style="background:var(--surface2);border-radius:4px;height:20px;overflow:hidden;position:relative">
+            <div style="width:${pct}%;height:100%;background:${mo ? barColor : 'var(--red)'};border-radius:4px;display:flex;align-items:center;padding:0 6px;transition:width 0.5s ease">
+              <span style="font-size:10px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden">${label}</span>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  // ── Populate comparison cards ──
+  // Minimum
+  document.getElementById('cmp-min-date').textContent     = fmtDate(minS.date) || '—';
+  document.getElementById('cmp-min-months').textContent   = minS.maxMo ? `${minS.maxMo} months` : 'N/A';
+  document.getElementById('cmp-min-interest').textContent = fmt(minS.totInt);
+  miniTimeline(minPayoffs, '#f4645f', 'cmp-min-timeline');
+
+  // Current
+  document.getElementById('cmp-cur-date').textContent     = fmtDate(curS.date) || '—';
+  document.getElementById('cmp-cur-months').textContent   = curS.maxMo ? `${curS.maxMo} months` : 'N/A';
+  document.getElementById('cmp-cur-interest').textContent = fmt(curS.totInt);
+  const curSave = minS.totInt - curS.totInt;
+  document.getElementById('cmp-cur-savings').textContent  = curSave > 1 ? `You save ${fmt(curSave)} vs minimum` : '';
+  const moSaved = minS.maxMo - curS.maxMo;
+  if (moSaved > 0) {
+    document.getElementById('cmp-cur-months').textContent = `${curS.maxMo} months  (${moSaved} mo faster)`;
+  }
+  miniTimeline(currentPayoffs, '#2dd4a0', 'cmp-cur-timeline');
+
+  // Accelerated
+  document.getElementById('cmp-acc-date').textContent     = fmtDate(accS.date) || '—';
+  document.getElementById('cmp-acc-months').textContent   = accS.maxMo ? `${accS.maxMo} months` : 'N/A';
+  document.getElementById('cmp-acc-interest').textContent = fmt(accS.totInt);
+  const accSaveVsCur  = curS.totInt - accS.totInt;
+  const accMonthFaster = curS.maxMo - accS.maxMo;
+  let accMsg = '';
+  if (accSaveVsCur > 1)  accMsg += `Save ${fmt(accSaveVsCur)} vs current`;
+  if (accMonthFaster > 0) accMsg += (accMsg ? '  ·  ' : '') + `${accMonthFaster} mo faster`;
+  document.getElementById('cmp-acc-savings').textContent  = accMsg;
+  miniTimeline(accPayoffs, '#5b9cf6', 'cmp-acc-timeline');
+}
+
+// ── NAVIGATION ──
+function showPage(name, mobileNavId) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.mobile-nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  // Desktop nav
+  const desktopTabs = document.querySelectorAll('.nav-tab');
+  const pageOrder = ['dashboard','calendar','bills','transactions','income','creditcards','settings'];
+  const idx = pageOrder.indexOf(name);
+  if (idx >= 0 && desktopTabs[idx]) desktopTabs[idx].classList.add('active');
+  // Mobile nav
+  const mobileBtn = document.getElementById('mnav-' + name) || (mobileNavId ? document.getElementById(mobileNavId) : null);
+  if (mobileBtn) mobileBtn.classList.add('active');
+  // Page-specific init
+  if (name === 'calendar') renderCalendar();
+  if (name === 'income') { renderDeductionList('pretax'); renderDeductionList('posttax'); renderPaycheckHistory(); calcIncome(); }
+  if (name === 'creditcards') renderCreditCards();
+  // Scroll to top on mobile
+  if (window.innerWidth <= 768) window.scrollTo(0, 0);
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
+
+// ── KEYBOARD SHORTCUT ──
+document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open')); });
+
+// ── PWA SERVICE WORKER ──
+// Inline SW via blob URL so it works from a local file
+const SW_CODE = `
+self.addEventListener('install', e => { self.skipWaiting(); });
+self.addEventListener('activate', e => { e.waitUntil(clients.claim()); });
+self.addEventListener('fetch', e => {
+  // Cache-first for Google Fonts and APIs, network-first for everything else
+  if (e.request.url.includes('fonts.googleapis') || e.request.url.includes('fonts.gstatic')) {
+    e.respondWith(
+      caches.open('ledger-fonts').then(cache =>
+        cache.match(e.request).then(r => r || fetch(e.request).then(nr => { cache.put(e.request, nr.clone()); return nr; }))
+      )
+    );
+  }
+});
+`;
+
+function registerSW() {
+  if (!('serviceWorker' in navigator)) return;
+  try {
+    const blob = new Blob([SW_CODE], { type: 'application/javascript' });
+    const swUrl = URL.createObjectURL(blob);
+    navigator.serviceWorker.register(swUrl).catch(() => {});
+  } catch(e) {}
+}
+
+// PWA install prompt
+let deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  // Show install button in settings if not already installed
+  const installDiv = document.getElementById('pwa-install-row');
+  if (installDiv) installDiv.style.display = 'flex';
+});
+
+function installPWA() {
+  if (!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  deferredInstallPrompt.userChoice.then(() => { deferredInstallPrompt = null; });
+}
+
+registerSW();
+
+init();
+</script>
+</body>
+</html>
