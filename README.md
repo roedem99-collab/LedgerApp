@@ -11,6 +11,7 @@ A fully featured personal finance app with Google Drive sync, installable on iPh
 - Google Drive sync across all devices
 - Installable as a PWA on iPhone and desktop
 
+
 ## Updating the App
 1. Get the new `BudgetTracker.html` from Claude
 2. Rename it to `index.html`
