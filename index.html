@@ -1083,7 +1083,7 @@
           </div>
         </div>
         <div style="margin-top:12px;padding:10px;background:var(--surface2);border-radius:8px;font-size:12px;color:var(--text3)">
-          📱 <strong style="color:var(--text2)">iPhone setup:</strong> Open your GitHub Pages URL in Safari on your iPhone → tap the Share button → tap "Add to Home Screen" → tap Add. The app installs with its own icon. Sign into the same Google account and tap Connect Drive — both devices sync automatically.
+          📱 <strong style="color:var(--text2)">iPhone setup:</strong> Save this HTML file to your iPhone via AirDrop or iCloud. Open in Safari → tap Share → "Add to Home Screen" to install as an app. Sign into the same Google account and tap Connect Drive — both devices stay in sync automatically.
         </div>
         <div id="pwa-install-row" style="display:none;margin-top:10px;align-items:center;gap:10px">
           <button class="btn btn-primary" onclick="installPWA()" style="font-size:13px">
@@ -1353,16 +1353,16 @@ function init() {
 }
 
 // ── GOOGLE DRIVE SYNC ──
+// ── GOOGLE DRIVE SYNC (Google Identity Services — current API) ──
 const DRIVE_FILE_NAME = 'LedgerData.json';
-const DRIVE_FOLDER    = 'Ledger';
-let driveFileId   = null;
-let driveReady    = false;
+let driveFileId    = null;
+let driveReady     = false;
+let driveToken     = null;
 let driveSaveTimer = null;
-const GAPI_CLIENT_ID = ''; // Set via prompt — stored in localStorage
 
 function setSyncStatus(status, label) {
-  const dot = document.getElementById('sync-dot');
-  const lbl = document.getElementById('sync-label');
+  const dot    = document.getElementById('sync-dot');
+  const lbl    = document.getElementById('sync-label');
   const detail = document.getElementById('drive-status-detail');
   if (!dot) return;
   dot.className = 'sync-dot ' + status;
@@ -1375,50 +1375,9 @@ function setSyncStatus(status, label) {
   }
 }
 
-async function connectDrive() {
-  // We use Google Drive REST API via gapi
-  // If gapi not loaded yet, load it
-  if (typeof gapi === 'undefined') {
-    setSyncStatus('syncing', 'Loading…');
-    await loadScript('https://apis.google.com/js/api.js');
-  }
-  gapi.load('client:auth2', async () => {
-    try {
-      await gapi.client.init({
-        apiKey: 'AIzaSyD-placeholder',           // not needed for Drive with OAuth
-        clientId: state._clientId || GAPI_CLIENT_ID || promptForClientId(),
-        scope: 'https://www.googleapis.com/auth/drive.file',
-        discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest']
-      });
-      const authInstance = gapi.auth2.getAuthInstance();
-      if (!authInstance.isSignedIn.get()) {
-        await authInstance.signIn();
-      }
-      driveReady = true;
-      updateDriveUI(true);
-      setSyncStatus('syncing', 'Connected');
-      await driveLoad();
-    } catch(e) {
-      console.error('Drive auth error', e);
-      setSyncStatus('error', 'Auth failed');
-    }
-  });
-}
-
-function promptForClientId() {
-  const id = prompt(
-    'Paste your Google OAuth Client ID here.\n\n' +
-    'Your GitHub Pages URL is: ' + location.origin + '\n\n' +
-    'Make sure this URL is added to Authorized JavaScript Origins\n' +
-    'in your Google Cloud Console OAuth 2.0 Client ID settings.\n\n' +
-    'Client ID:'
-  );
-  if (id) { state._clientId = id.trim(); save(); }
-  return id || '';
-}
-
 function loadScript(src) {
   return new Promise((res, rej) => {
+    if (document.querySelector('script[src="' + src + '"]')) { res(); return; }
     const s = document.createElement('script');
     s.src = src; s.onload = res; s.onerror = rej;
     document.head.appendChild(s);
@@ -1426,118 +1385,164 @@ function loadScript(src) {
 }
 
 function updateDriveUI(connected) {
-  const btn = document.getElementById('drive-connect-btn');
+  const btn     = document.getElementById('drive-connect-btn');
   const syncBtn = document.getElementById('drive-sync-now-btn');
   const topBtn  = document.getElementById('drive-btn');
   if (btn) {
-    btn.textContent = connected ? '✓ Drive Connected' : '☁️ Connect Google Drive';
-    btn.style.background = connected ? 'var(--green-dim)' : 'var(--blue-dim)';
-    btn.style.color      = connected ? 'var(--green)'    : 'var(--blue)';
+    btn.textContent      = connected ? '✓ Drive Connected' : '☁️ Connect Google Drive';
+    btn.style.background = connected ? 'var(--green-dim)'  : 'var(--blue-dim)';
+    btn.style.color      = connected ? 'var(--green)'      : 'var(--blue)';
   }
   if (syncBtn) syncBtn.style.display = connected ? 'block' : 'none';
-  if (topBtn)  { topBtn.textContent = connected ? '✓ Drive' : '☁️ Connect Drive'; }
+  if (topBtn)  topBtn.textContent    = connected ? '✓ Drive' : '☁️ Connect Drive';
+}
+
+async function connectDrive() {
+  setSyncStatus('syncing', 'Connecting…');
+  try {
+    await loadScript('https://accounts.google.com/gsi/client');
+    await loadScript('https://apis.google.com/js/api.js');
+
+    const clientId = state._clientId || promptForClientId();
+    if (!clientId) { setSyncStatus('error', 'No Client ID'); return; }
+    state._clientId = clientId;
+    try { localStorage.setItem('ledgerState', JSON.stringify(state)); } catch(e) {}
+
+    // Init GAPI client
+    await new Promise((res, rej) => {
+      gapi.load('client', async () => {
+        try {
+          await gapi.client.init({});
+          await gapi.client.load('https://www.googleapis.com/discovery/v1/apis/drive/v3/rest');
+          res();
+        } catch(e) { rej(e); }
+      });
+    });
+
+    // Google Identity Services token client (popup sign-in)
+    const tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: clientId,
+      scope: 'https://www.googleapis.com/auth/drive.file',
+      callback: async (tokenResponse) => {
+        if (tokenResponse.error) {
+          console.error('Token error:', tokenResponse);
+          setSyncStatus('error', 'Auth failed');
+          return;
+        }
+        driveToken = tokenResponse.access_token;
+        gapi.client.setToken({ access_token: driveToken });
+        driveReady = true;
+        updateDriveUI(true);
+        setSyncStatus('syncing', 'Connected');
+        await driveLoad();
+      }
+    });
+
+    tokenClient.requestAccessToken({ prompt: 'consent' });
+
+  } catch(e) {
+    console.error('Drive connect error:', e);
+    setSyncStatus('error', 'Auth failed');
+  }
+}
+
+function promptForClientId() {
+  const saved = state._clientId || '';
+  const msg = saved
+    ? 'Current Client ID saved. Paste a new one to change it, or click Cancel to keep it.\n\nYour authorized origin: ' + location.origin
+    : 'Paste your Google OAuth Client ID:\n(ends in .apps.googleusercontent.com)\n\nMake sure ' + location.origin + ' is in Authorized JavaScript Origins.';
+  const id = prompt(msg, saved);
+  if (id && id.trim()) { state._clientId = id.trim(); try { localStorage.setItem('ledgerState', JSON.stringify(state)); } catch(e) {} return id.trim(); }
+  return saved;
 }
 
 async function driveLoad() {
-  if (!driveReady) return;
+  if (!driveReady || !driveToken) return;
   try {
-    setSyncStatus('syncing', 'Syncing…');
-    // Find existing file
-    const res = await gapi.client.drive.files.list({
-      q: `name='${DRIVE_FILE_NAME}' and trashed=false`,
-      spaces: 'drive', fields: 'files(id,name,modifiedTime)'
+    setSyncStatus('syncing', 'Loading data…');
+    const listRes = await gapi.client.drive.files.list({
+      q: "name='" + DRIVE_FILE_NAME + "' and trashed=false",
+      spaces: 'drive',
+      fields: 'files(id,name,modifiedTime)'
     });
-    const files = res.result.files;
+    const files = listRes.result.files;
     if (files && files.length > 0) {
       driveFileId = files[0].id;
-      // Load content
-      const content = await gapi.client.drive.files.get({
-        fileId: driveFileId, alt: 'media'
-      });
-      const loaded = typeof content.result === 'string'
-        ? JSON.parse(content.result)
-        : content.result;
+      const res = await fetch(
+        'https://www.googleapis.com/drive/v3/files/' + driveFileId + '?alt=media',
+        { headers: { 'Authorization': 'Bearer ' + driveToken } }
+      );
+      const loaded = await res.json();
       if (loaded && loaded.bills !== undefined) {
         Object.assign(state, loaded);
         if (!state.creditCards) state.creditCards = [];
         if (!state.paychecks)   state.paychecks   = [];
         if (!state.incomeData)  state.incomeData   = { gross:0,freq:'biweekly',nextPay:'',taxFederal:22,taxState:5,taxSS:6.2,taxMedicare:1.45,pretax:[],posttax:[] };
-        // Repopulate form fields
-        document.getElementById('set-income').value  = state.income  || '';
-        document.getElementById('set-balance').value = state.balance || '';
-        document.getElementById('set-nextpay').value = state.nextPay || '';
-        document.getElementById('set-freq').value    = state.payFreq || 'biweekly';
-        document.getElementById('inc-gross').value   = state.incomeData.gross || '';
-        document.getElementById('inc-freq').value    = state.incomeData.freq  || 'biweekly';
-        document.getElementById('inc-nextpay').value = state.incomeData.nextPay || '';
-        document.getElementById('tax-federal').value = state.incomeData.taxFederal ?? 22;
-        document.getElementById('tax-state').value   = state.incomeData.taxState   ?? 5;
-        document.getElementById('tax-ss').value      = state.incomeData.taxSS      ?? 6.2;
-        document.getElementById('tax-medicare').value= state.incomeData.taxMedicare?? 1.45;
+        document.getElementById('set-income').value   = state.income  || '';
+        document.getElementById('set-balance').value  = state.balance || '';
+        document.getElementById('set-nextpay').value  = state.nextPay || '';
+        document.getElementById('set-freq').value     = state.payFreq || 'biweekly';
+        document.getElementById('inc-gross').value    = state.incomeData.gross   || '';
+        document.getElementById('inc-freq').value     = state.incomeData.freq    || 'biweekly';
+        document.getElementById('inc-nextpay').value  = state.incomeData.nextPay || '';
+        document.getElementById('tax-federal').value  = state.incomeData.taxFederal  ?? 22;
+        document.getElementById('tax-state').value    = state.incomeData.taxState    ?? 5;
+        document.getElementById('tax-ss').value       = state.incomeData.taxSS       ?? 6.2;
+        document.getElementById('tax-medicare').value = state.incomeData.taxMedicare ?? 1.45;
         recalc();
       }
       setSyncStatus('synced', 'Synced');
     } else {
-      // No file yet — create it
       await driveSaveNow();
     }
   } catch(e) {
-    console.error('Drive load error', e);
+    console.error('Drive load error:', e);
     setSyncStatus('error', 'Sync error');
   }
 }
 
 async function driveSaveNow() {
-  if (!driveReady) return;
+  if (!driveReady || !driveToken) return;
   setSyncStatus('syncing', 'Saving…');
   try {
-    const body = JSON.stringify(state);
-    const blob  = new Blob([body], { type: 'application/json' });
+    const body     = JSON.stringify(state);
+    const boundary = 'ledger_' + Date.now();
     if (driveFileId) {
-      // Update existing
-      await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': 'Bearer ' + gapi.auth2.getAuthInstance().currentUser.get().getAuthResponse().access_token,
-          'Content-Type': 'application/json'
-        },
-        body
-      });
+      await fetch(
+        'https://www.googleapis.com/upload/drive/v3/files/' + driveFileId + '?uploadType=media',
+        { method: 'PATCH', headers: { 'Authorization': 'Bearer ' + driveToken, 'Content-Type': 'application/json' }, body }
+      );
     } else {
-      // Create new
-      const meta = JSON.stringify({ name: DRIVE_FILE_NAME, mimeType: 'application/json' });
-      const form  = new FormData();
-      form.append('metadata', new Blob([meta], { type: 'application/json' }));
-      form.append('file', blob);
-      const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-        method: 'POST',
-        headers: { 'Authorization': 'Bearer ' + gapi.auth2.getAuthInstance().currentUser.get().getAuthResponse().access_token },
-        body: form
-      });
+      const meta      = JSON.stringify({ name: DRIVE_FILE_NAME, mimeType: 'application/json' });
+      const multipart = '--' + boundary + '\r\nContent-Type: application/json\r\n\r\n' + meta + '\r\n'
+                      + '--' + boundary + '\r\nContent-Type: application/json\r\n\r\n' + body + '\r\n'
+                      + '--' + boundary + '--';
+      const res = await fetch(
+        'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+        { method: 'POST', headers: { 'Authorization': 'Bearer ' + driveToken, 'Content-Type': 'multipart/related; boundary=' + boundary }, body: multipart }
+      );
       const json = await res.json();
       driveFileId = json.id;
     }
     setSyncStatus('synced', 'Synced');
-    // Also save locally as backup
     try { localStorage.setItem('ledgerState', JSON.stringify(state)); } catch(e) {}
   } catch(e) {
-    console.error('Drive save error', e);
+    console.error('Drive save error:', e);
     setSyncStatus('error', 'Sync error');
     try { localStorage.setItem('ledgerState', JSON.stringify(state)); } catch(e2) {}
   }
 }
 
-// Debounced save — waits 1.5s after last change before writing to Drive
+// Debounced save — instant local, 1.5s debounce for Drive
 function save() {
-  // Always save locally immediately
   try { localStorage.setItem('ledgerState', JSON.stringify(state)); } catch(e) {}
-  // Debounce Drive save
   if (driveReady) {
     setSyncStatus('syncing', 'Saving…');
     if (driveSaveTimer) clearTimeout(driveSaveTimer);
     driveSaveTimer = setTimeout(driveSaveNow, 1500);
   }
 }
+
 
 function saveSettings() {
   state.income = parseFloat(document.getElementById('set-income').value) || 0;
